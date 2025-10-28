@@ -13,15 +13,24 @@ import tkinter
 import tkinter.font
 import openpyxl
 from datetime import datetime
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 import threading
 import webview
 from flask_cors import CORS
 import io, base64
+import os
 # from numba import jit
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="frontend/dist")
 CORS(app)
+
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve(path):
+    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, "index.html")
 
 @app.route("/api/calc", methods=["POST"])
 def calc():
@@ -725,10 +734,10 @@ def plot():
     return jsonify({"image": img_base64})
 
 def start_flask():
-    app.run(host="127.0.0.1", port=5000)
+    app.run()
 
 if __name__ == "__main__":
     t = threading.Thread(target=start_flask, daemon=True)
     t.start()
-    webview.create_window("React + Python", "http://localhost:5173")
+    webview.create_window("React + Python", "http://127.0.0.1:5000")
     webview.start()
