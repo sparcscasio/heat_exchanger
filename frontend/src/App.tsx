@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import './App.css';
+import InputFrame from './common/frame/InputFrame';
 
 interface OutPutExcel {
   Tube_ea: number;
@@ -245,9 +246,11 @@ function App() {
     }
   };
 
-  return (
-    <div className="App">
-      <header className="App-header">
+  return <InputFrame />;
+
+  //return (
+    // <div className="App">
+      {/* <header className="App-header">
         <h1>React ↔ Flask 연결 테스트</h1>
         <div
         style={{
@@ -298,9 +301,9 @@ function App() {
           </div>
           
         )}
-      </header>
-    </div>
-  );
+      </header> */}
+    // </div>
+  //);
 }
 
 export default App;

@@ -24,13 +24,21 @@ import os
 app = Flask(__name__, static_folder="frontend/dist")
 CORS(app)
 
+IS_DEV = os.environ.get("FLASK_ENV") == "development"
+
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def serve(path):
+    # ✔ 개발 환경: React Vite dev server로 redirect
+    if IS_DEV:
+        return redirect(f"http://localhost:5173/{path}")
+
+    # ✔ 프로덕션 환경: dist 빌드된 파일을 serve
     if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
         return send_from_directory(app.static_folder, path)
-    else:
-        return send_from_directory(app.static_folder, "index.html")
+
+    # ✔ SPA: 모든 URL은 index.html
+    return send_from_directory(app.static_folder, "index.html")
 
 @app.route("/api/calc", methods=["POST"])
 def calc():
