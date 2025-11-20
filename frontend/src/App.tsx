@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import './App.css';
 import InputFrame from './common/frame/InputFrame';
+import OutputFrame from './common/frame/OutputFrame';
 
 interface OutPutExcel {
   Tube_ea: number;
@@ -246,7 +247,8 @@ function App() {
     }
   };
 
-  return <InputFrame />;
+  // return <InputFrame />;
+  return <OutputFrame />;
 
   //return (
     // <div className="App">
