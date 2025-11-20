@@ -54,7 +54,7 @@ export default function CustomInput({
         placeholder={placeholder}
         inputMode="numeric"
         onBlur={handleBlur}
-        style={{boxSizing: 'border-box', border: error ? '0.5px solid red' : 'none'}}
+        style={{boxSizing: 'border-box', border: error ? '0.5px solid red' : 'none', backgroundColor: '#ececec'}}
       />
       {error && errormessage && <ErrorMessage>{errormessage}</ErrorMessage>}
     </div>

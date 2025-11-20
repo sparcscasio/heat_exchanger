@@ -1,9 +1,8 @@
 import styled from "@emotion/styled";
-import { useState } from "react";
-import CustomNumberInput from "../components/NumberInput";
-import CustomInput from "../components/CustomInput";
-import CustomDropdown from "../components/CustomDropdown";
-import CustomDateInput from "../components/CustomDateInput";
+import { useRef } from "react";
+import type { OutputType } from "../type/Output";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 const RowWarapper = styled.div`
     display: flex; 
@@ -22,6 +21,14 @@ const FrameWrapper = styled.div`
     margin-top: 50px;
 `;
 
+
+const ColumnWrapper = styled.div`
+    display: flex; 
+    flex-direction: column;
+    gap: 0px;
+    width: 100%;
+`;
+
 const ContentsWrapper = styled.div`
     display: flex;
     flex : 1;
@@ -33,830 +40,794 @@ const ContentsWrapper = styled.div`
     box-sizing: border-box;
 `;
 
-export default function OutputFrame() {
-    const [unitIdentifier, setUnitIdentifier] = useState<string>('');
-    const [caseMode, setCaseMode] = useState<string>('');
-    const [serviceType, setServiceType] = useState<string>('');
-    const [caseInput, setCaseInput] = useState<string>('');
-    const [problem, setProblem] = useState<string>('');
-    const [customer, setCustomer] = useState<string>('');
-    const [jobNo, setJobNo] = useState<string>('');
-    const [address, setAddress] = useState<string>('');
-    const [refNo, setRefNo] = useState<string>('');
-    const [location, setLocation] = useState<string>('');
-    const [proposalNo, setProposalNo] = useState<string>('');
-    const [serviceUnit, setServiceUnit] = useState<string>('');
-    const [date, setDate] = useState<string>('');
-    const [rev, setRev] = useState<string>('');
-    const [type1, setType1] = useState<string>('');
-    const [type2, setType2] = useState<string>('');
-    const [type3, setType3] = useState<string>('');
-    const [orientation, setOrientation] = useState<string>('');
-    const [hotFluid, setHotFluid] = useState<string>('');
-    const [unitAngle, setUnitAngle] = useState<string>('');
-    const [connectParallel, setConnectParallel] = useState<string>('');
-    const [connectSeries, setConnectSeries] = useState<string>('');
+const Inner = styled.div`
+    width: 100%;
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+`
 
-    const [fluidNameShell, setFluidNameShell] = useState<string>('');
-    const [fluidNameTube, setFluidNameTube] = useState<string>('');
-    const [fluidQuantityTotalShell, setFluidQuantityTotalShell] = useState<string>('');
-    const [fluidQuantityTotalTube, setFluidQuantityTotalTube] = useState<string>('');
-    const [vaporWeightFractionInShell, setVaporWeightFractionInShell] = useState<string>('');
-    const [vaporWeightFractionOutShell, setVaporWeightFractionOutShell] = useState<string>('');
-    const [vaporWeightFractionInTube, setVaporWeightFractionInTube] = useState<string>('');
-    const [vaporWeightFractionOutTube, setVaporWeightFractionOutTube] = useState<string>('');
-    const [inletPressureShell, setInletPressureShell] = useState<string>('');
-    const [inletPressureTube, setInletPressureTube] = useState<string>('');
-    const [pressureDropShell, setPressureDropShell] = useState<string>('');
-    const [pressureDropTube, setPressureDropTube] = useState<string>('');
-    const [exchangerDuty, setExchangerDuty] = useState<string>('');
+const ButtonWrapper = styled.div`
+    width: 100%;
+    display: flex;
+    flex: 1;
+    flex-direction: row;
+    gap: 20px;
+    justify-content: flex-end;
+`
 
-    // const [fluidQuantityVaporInTube, setFluidQuantityVaporInTube] = useState<string>('');
-    // const [fluidQuantityVaporOutTube, setFluidQuantityVaporOutTube] = useState<string>('');
-    // const [fluidQuantityLiquidInTube, setFluidQuantityLiquidInTube] = useState<string>('');
-    // const [fluidQuantityLiquidOutTube, setFluidQuantityLiquidOutTube] = useState<string>('');
-    // const [fluidQuantitySteamInTube, setFluidQuantitySteamInTube] = useState<string>('');
-    // const [fluidQuantitySteamOutTube, setFluidQuantitySteamOutTube] = useState<string>('');
-    // const [fluidQuantityWaterInTube, setFluidQuantityWaterInTube] = useState<string>('');
-    // const [fluidQuantityWaterOutTube, setFluidQuantityWaterOutTube] = useState<string>('');
-    // const [fluidQuantityNoncondensablesInTube, setFluidQuantityNoncondensablesInTube] = useState<string>('');
-    // const [fluidQuantityNoncondensablesOutTube, setFluidQuantityNoncondensablesOutTube] = useState<string>('');
+interface OutputFrameProps {
+    output: OutputType;
+    setIsInput: React.Dispatch<React.SetStateAction<boolean>>;
+}
 
-    // const [fluidQuantityVaporInShell, setFluidQuantityVaporInShell] = useState<string>('');
-    // const [fluidQuantityVaporOutShell, setFluidQuantityVaporOutShell] = useState<string>('');
-    // const [fluidQuantityLiquidInShell, setFluidQuantityLiquidInShell] = useState<string>('');
-    // const [fluidQuantityLiquidOutShell, setFluidQuantityLiquidOutShell] = useState<string>('');
-    // const [fluidQuantitySteamInShell, setFluidQuantitySteamInShell] = useState<string>('');
-    // const [fluidQuantitySteamOutShell, setFluidQuantitySteamOutShell] = useState<string>('');
-    // const [fluidQuantityWaterInShell, setFluidQuantityWaterInShell] = useState<string>('');
-    // const [fluidQuantityWaterOutShell, setFluidQuantityWaterOutShell] = useState<string>('');
-    // const [fluidQuantityNoncondensablesInShell, setFluidQuantityNoncondensablesInShell] = useState<string>('');
-    // const [fluidQuantityNoncondensablesOutShell, setFluidQuantityNoncondensablesOutShell] = useState<string>('');
+export default function OutputFrame({ output, setIsInput}: OutputFrameProps) {
+    const targetRef = useRef<HTMLDivElement>(null);
+    
+    console.log(output);
+    const handleExportPDF = async () => {
+        if (!targetRef.current) return;
 
-    const [temperatureInShell, setTemperatureInShell] = useState<string>('');
-    const [temperatureOutShell, setTemperatureOutShell] = useState<string>('');
-    const [temperatureInTube, setTemperatureInTube] = useState<string>('');
-    const [temperatureOutTube, setTemperatureOutTube] = useState<string>('');
+        const element = targetRef.current;
 
-    const [foulingResistanceShell, setFoulingResistanceShell] = useState<string>('');
-    const [foulingResistanceTube, setFoulingResistanceTube] = useState<string>('');
+        // HTML → Canvas 변환
+        const canvas = await html2canvas(element, { scale: 2 });
 
-    const [baffleType, setBaffleType] = useState<string>('');
-    const [temaType, setTEMAType] = useState<string>('');
+        const imgData = canvas.toDataURL("image/png");
 
-    const [shellID, setShellID] = useState<string>('');
-    const [baffleCut, setBaffleCut] = useState<string>('');
+        // PDF 생성
+        const pdf = new jsPDF("p", "mm", "a4");
 
-    const [series, setSeries] = useState<string>('');
-    const [baffleOrientation, setBaffleOrientation] = useState<string>('');
-    const [parallel, setParallel] = useState<string>('');
-    const [centralSpacing, setCentralSpacing] = useState<string>('');
-    const [crosspasses, setCrosspasses] = useState<string>('');
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const imgProps = pdf.getImageProperties(imgData);
+        const imgWidth = pageWidth;
+        const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
 
-    const [tubeType, setTubeType] = useState<string>('');
-    const [tubeOD, setTubeOD] = useState<string>('');
-    const [length, setLength] = useState<string>('');
-    const [pitchRatio, setPitchRatio] = useState<string>('');
-    const [layout, setLayout] = useState<string>('');
-    const [tubeCount, setTubeCount] = useState<string>('');
-    const [tubePass, setTubePass] = useState<string>('');
+        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+        pdf.save("output.pdf");
+    };
 
-    const [shellInlet, setShellInlet] = useState<string>('');
-    const [shellOutlet, setShellOutlet] = useState<string>('');
-    const [inletHight, setInletHight] = useState<string>('');
-    const [outletHight, setOutletHight] = useState<string>('');
-    const [tubeInlet, setTubeInlet] = useState<string>('');
-    const [tubeOutlet, setTubeOutlet] = useState<string>('');
-
-    const errorFunction = (v: string) => {
-        if (v == '잘못된 입력') {
-            return true;
-        }
-        return false;
+    const handletoInput = () => {
+        setIsInput(true);
     }
     
     return (
-        <FrameWrapper>
-            <RowWarapper>
-                <ContentsWrapper style={{fontWeight: 'bold', fontSize: 20, justifyContent: 'center'}}>HEAT EXCHANGER SPECIFICATION SHEET</ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper style={{border: 'none'}}>
-                    <div style={{width: 110, textAlign: 'left'}}>
-                        Unit identifier
-                    </div>
-                    <CustomInput value={unitIdentifier} onChange={setUnitIdentifier} />
-                </ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
-                    <div style={{width: 150, textAlign: 'left'}}>
-                        Case mode
-                    </div>
-                    <CustomDropdown
-                        value={caseMode}
-                        onChange={setCaseMode}
-                        options={[
-                            "Rating",
-                            "Simulation",
-                            "Design",
-                        ]}
-                        placeholder="Select Case mode"
-                    />
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <div style={{width: 150, textAlign: 'left'}}>
-                        Service type
-                    </div>
-                    <CustomDropdown
-                        value={serviceType}
-                        onChange={setServiceType}
-                        options={[
-                            "Generic Shell & Tube",
-                            "Standard Shell & Tube",
-                        ]}
-                        placeholder="Select service type"
-                    />
-                </ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
-                    <div style={{width: 100, textAlign: 'left'}}>
-                        Case
-                    </div>
-                        <CustomInput value={caseInput} onChange={setCaseInput} />
-                </ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
-                    <div style={{width: 100, textAlign: 'left'}}>
-                        Problem
-                    </div>
-                        <CustomInput value={problem} onChange={setProblem} />
-                </ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
-                    <div style={{width: 100, textAlign: 'left'}}>
-                        Customer
-                    </div>
-                    <CustomInput value={customer} onChange={setCustomer} />
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <div style={{width: 100, textAlign: 'left'}}>
-                        Job No.
-                    </div>
-                    <CustomInput value={jobNo} onChange={setJobNo} />
-                </ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
-                    <div style={{width: 100, textAlign: 'left'}}>
-                        Address
-                    </div>
-                    <CustomInput value={address} onChange={setAddress} />
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <div style={{width: 120, textAlign: 'left'}}>
-                        Reference No.
-                    </div>
-                    <CustomInput value={refNo} onChange={setRefNo} />
-                </ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
-                    <div style={{width: 100, textAlign: 'left'}}>
-                        Location
-                    </div>
-                    <CustomInput value={location} onChange={setLocation} />
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <div style={{width: 120, textAlign: 'left'}}>
-                        Proposal No.
-                    </div>
-                    <CustomInput value={proposalNo} onChange={setProposalNo} />
-                </ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper style={{border: 'none'}}>
-                    <div style={{width: 140, textAlign: 'left'}}>
-                        Service of Unit
-                    </div>
-                    <CustomInput value={serviceUnit} onChange={setServiceUnit} />
-                </ContentsWrapper>
-                <ContentsWrapper style={{border: 'none'}}>
+        <div style={{display: 'flex', flexDirection: 'column', gap: 20, width: '100%'}}>
+            <FrameWrapper ref={targetRef}>
+                <RowWarapper style={{border: '1px solid #ccc'}}>
+                    <div style={{fontSize: 70, fontWeight: 'bold', border: 'none'}}>MY LOGO</div>
+                    <ContentsWrapper style={{fontWeight: 'bold', fontSize: 24, justifyContent: 'center', border: 'none'}}>
+                        <ColumnWrapper style={{alignItems: 'space-between'}}>
+                            HEAT EXCHANGER SPECIFICATION SHEET
+                            <ContentsWrapper style={{border: 'none', justifyContent: 'flex-end', fontSize: 20, fontWeight: 'normal'}}>
+                                Job No.
+                                <div style={{width: 100, textAlign: 'center'}}>{output.jobNo}</div>
+                            </ContentsWrapper>
+                        </ColumnWrapper>
+                    </ContentsWrapper>
+                </RowWarapper>
+                <RowWarapper style={{border: '1px solid #ccc'}}>
                     <ContentsWrapper style={{border: 'none'}}>
-                        <div style={{width: 120, textAlign: 'left'}}>
-                        Date
+                        <div style={{width: 200, textAlign: 'left'}}>
+                            Customer
                         </div>
-                        <CustomDateInput value={date} onChange={setDate}/>
+                        <Inner style={{justifyContent: 'flex-start'}}>{output.customer}</Inner>
                     </ContentsWrapper>
                     <ContentsWrapper style={{border: 'none'}}>
-                        <div style={{width: 70, textAlign: 'left'}}>
-                        Rev
+                        <div style={{width: 200, textAlign: 'left'}}>
+                            Reference No.
                         </div>
-                        <CustomInput value={rev} onChange={setRev}/>
+                        <Inner style={{justifyContent: 'flex-start'}}>{output.referenceNo}</Inner>
                     </ContentsWrapper>
-                </ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
+                </RowWarapper>
+                <RowWarapper style={{border: '1px solid #ccc'}}>
                     <ContentsWrapper style={{border: 'none'}}>
-                        <div style={{width: 140, textAlign: 'left'}}>
+                        <div style={{width: 200, textAlign: 'left'}}>
+                            Address
+                        </div>
+                        <Inner style={{justifyContent: 'flex-start'}}>{output.address}</Inner>
+                    </ContentsWrapper>
+                    <ContentsWrapper style={{border: 'none'}}>
+                        <div style={{width: 200, textAlign: 'left'}}>
+                            Proposal No.
+                        </div>
+                        <Inner style={{justifyContent: 'flex-start'}}>{output.proposalNo}</Inner>
+                    </ContentsWrapper>
+                </RowWarapper>
+                <RowWarapper style={{border: '1px solid #ccc'}}>
+                    <ContentsWrapper style={{border: 'none'}}>
+                        <div style={{width: 200, textAlign: 'left'}}>
+                            Plant Location
+                        </div>
+                        <Inner style={{justifyContent: 'flex-start'}}>{output.plantLocation}</Inner>
+                    </ContentsWrapper>
+                    <ContentsWrapper style={{border: 'none'}}>
+                        <ContentsWrapper style={{border: 'none', padding: 0}}>
+                            <div style={{width: 200, textAlign: 'left'}}>
+                                Date
+                            </div>
+                            <Inner style={{justifyContent: 'flex-start'}}>{output.date}</Inner>
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{border: 'none', padding: 0}}>
+                            <div style={{width: 200, textAlign: 'left'}}>
+                                Rev
+                            </div>
+                            <Inner style={{justifyContent: 'flex-start'}}>{output.rev}</Inner>
+                        </ContentsWrapper>
+                    </ContentsWrapper>
+                </RowWarapper>
+                <RowWarapper style={{border: '1px solid #ccc'}}>
+                    <ContentsWrapper style={{border: 'none'}}>
+                        <div style={{width: 200, textAlign: 'left'}}>
+                            Service of Unit
+                        </div>
+                        <Inner style={{justifyContent: 'flex-start'}}>{output.serviceOfUnit}</Inner>
+                    </ContentsWrapper>
+                    <ContentsWrapper style={{border: 'none'}}>
+                        <div style={{width: 200, textAlign: 'left'}}>
+                            Item No.
+                        </div>
+                        <Inner style={{justifyContent: 'flex-start'}}>{output.itemNo}</Inner>
+                    </ContentsWrapper>
+                </RowWarapper>
+                <RowWarapper style={{border: '1px solid #ccc'}}>
+                    <ContentsWrapper style={{border: 'none'}}>
+                        <div style={{width: 200, textAlign: 'left'}}>
+                            Size
+                        </div>
+                        <Inner style={{justifyContent: 'flex-start'}}>{`${output.sizeHorizontal} x ${output.sizeVertical} mm`}</Inner>
+                    </ContentsWrapper>
+                    <ContentsWrapper style={{border: 'none'}}>
+                        <div style={{width: 200, textAlign: 'left'}}>
                             Type
                         </div>
-                        <div style={{width: 100}}>
-                            <CustomDropdown
-                                value={type1}
-                                onChange={setType1}
-                                options={[
-                                    "A",
-                                    "B",
-                                ]}
-                                placeholder=""
-                            />
-                        </div>
-                        <div style={{width: 100}}>
-                            <CustomDropdown
-                                value={type2}
-                                onChange={setType2}
-                                options={[
-                                    "E",
-                                    "F",
-                                ]}
-                                placeholder=""
-                            />
-                        </div>
-                        <div style={{width: 100}}>
-                            <CustomDropdown
-                                value={type3}
-                                onChange={setType3}
-                                options={[
-                                    "M",
-                                    "L",
-                                ]}
-                                placeholder=""
-                            />
-                        </div>
+                        <Inner style={{justifyContent: 'flex-start'}}>
+                            <div style={{width: 100, textAlign: 'left'}}>
+                                {`${output.type1}${output.type2}${output.type3}`}
+                            </div>
+                            {`${output.orientation}`}
+                        </Inner>
                     </ContentsWrapper>
                     <ContentsWrapper style={{border: 'none'}}>
-                        <div style={{width: 150}}>
-                            Orientation
+                        <div style={{width: 200, textAlign: 'left'}}>
+                            Connected In
                         </div>
-                        <CustomDropdown
-                            value={orientation}
-                            onChange={setOrientation}
-                            options={[
-                                "vertical",
-                                "horizontal",
-                            ]}
-                            placeholder=""
-                        />
+                        <Inner style={{justifyContent: 'flex-start'}}>
+                            {`${output.connectParallel} Parallel ${output.connectSeries} Series`}
+                        </Inner>
                     </ContentsWrapper>
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <div style={{width: 120, textAlign: 'left'}}>
-                        Item No.
-                    </div>
-                    <CustomDateInput value={date} onChange={setDate}/>
-                </ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
+                </RowWarapper>
+                <RowWarapper style={{border: '1px solid #ccc'}}>
                     <ContentsWrapper style={{border: 'none'}}>
-                        <div style={{width: 140, textAlign: 'left'}}>
-                            Hot fluid
+                        <div style={{width: 200, textAlign: 'left'}}>
+                            Surf/Unit (Gross/Eff)
                         </div>
-                        <CustomDropdown
-                            value={hotFluid}
-                            onChange={setHotFluid}
-                            options={[
-                                "shell side",
-                                "tube side",
-                            ]}
-                            placeholder=""
-                        />
+                        <Inner style={{justifyContent: 'flex-start'}}>{`${output.surfUnitGross} / ${output.surfUnitEff} m2`}</Inner>
                     </ContentsWrapper>
                     <ContentsWrapper style={{border: 'none'}}>
-                        <div style={{width: 140, textAlign: 'left'}}>
-                            Unit angle
+                        <div style={{width: 200, textAlign: 'left'}}>
+                            Shell/Unit
                         </div>
-                        <CustomInput value={unitAngle} onChange={setUnitAngle} />
+                        <Inner style={{justifyContent: 'flex-start'}}>
+                            {output.shellUnit}
+                        </Inner>
                     </ContentsWrapper>
-                </ContentsWrapper>
-                <ContentsWrapper style={{border: 'none', gap: 10}}>
-                    Connected In
-                    <div style={{width: 200}}>
-                        <CustomInput value={connectParallel} onChange={setConnectParallel} />
-                    </div>
-                    parallel
-                    <div style={{width: 200}}>
-                        <CustomInput value={connectSeries} onChange={setConnectSeries} />
-                    </div>
-                    series
-                </ContentsWrapper>
-            </RowWarapper>
-            
-            <RowWarapper>
-                <ContentsWrapper style={{fontWeight: 'bold', fontSize: 24, justifyContent: 'center'}}>PERFORMANCE OF ONE UNIT</ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>Fluid Allocation</ContentsWrapper>
-                <ContentsWrapper style={{justifyContent: 'center'}}>Shell Side</ContentsWrapper>
-                <ContentsWrapper style={{justifyContent: 'center'}}>Tube Side</ContentsWrapper>
-            </RowWarapper>
+                    <ContentsWrapper style={{border: 'none'}}>
+                        <div style={{width: 200, textAlign: 'left'}}>
+                            Surf/Shell (Gross/Eff)
+                        </div>
+                        <Inner style={{justifyContent: 'flex-start'}}>{`${output.surfShellGross} / ${output.surfShellEff} m2`}</Inner>
+                    </ContentsWrapper>
+                </RowWarapper>
 
-            <RowWarapper>
-                <ContentsWrapper>Fluid Name</ContentsWrapper>
-                <ContentsWrapper style={{justifyContent: 'center'}}><CustomInput value={fluidNameShell} onChange={setFluidNameShell} errorfunction={errorFunction} errormessage="unable fluid name"/></ContentsWrapper>
-                <ContentsWrapper style={{justifyContent: 'center'}}><CustomInput value={fluidNameTube} onChange={setFluidNameTube}/></ContentsWrapper>
-            </RowWarapper>
+                <RowWarapper>
+                    <ContentsWrapper style={{fontWeight: 'bold', fontSize: 24, justifyContent: 'center'}}>PERFORMANCE OF ONE UNIT</ContentsWrapper>
+                </RowWarapper>
+                <RowWarapper>
+                    <ContentsWrapper>Fluid Allocation</ContentsWrapper>
+                    <ContentsWrapper style={{justifyContent: 'center'}}>Shell Side</ContentsWrapper>
+                    <ContentsWrapper style={{justifyContent: 'center'}}>Tube Side</ContentsWrapper>
+                </RowWarapper>
 
-            <RowWarapper>
-                <ContentsWrapper>Fluid Qunatity, Total<div style={{width: 60}} />kg/hr</ContentsWrapper>
-                <ContentsWrapper style={{justifyContent: 'center'}}><CustomNumberInput value={fluidQuantityTotalShell} onChange={setFluidQuantityTotalShell}/></ContentsWrapper>
-                <ContentsWrapper style={{justifyContent: 'center'}}><CustomNumberInput value={fluidQuantityTotalTube} onChange={setFluidQuantityTotalTube}/></ContentsWrapper>
-            </RowWarapper>
-            {/* Vapor */}
-            {/* <RowWarapper>
-                <ContentsWrapper><div style={{width: 30}} />Vapor (In/Out)</ContentsWrapper>
-                <ContentsWrapper>
-                    <RowWarapper>
-                        <ContentsWrapper style={{justifyContent: 'center', border: 'none'}}>
-                            <CustomNumberInput value={fluidQuantityVaporInShell} onChange={setFluidQuantityVaporInShell}/>
-                        </ContentsWrapper>
-                        <ContentsWrapper style={{justifyContent: 'center', border: 'none'}}>
-                            <CustomNumberInput value={fluidQuantityVaporOutShell} onChange={setFluidQuantityVaporOutShell}/>
-                        </ContentsWrapper>
-                    </RowWarapper>
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <RowWarapper>
-                        <ContentsWrapper style={{justifyContent: 'center', border: 'none'}}>
-                            <CustomNumberInput value={fluidQuantityVaporInTube} onChange={setFluidQuantityVaporInTube}/>
-                        </ContentsWrapper>
-                        <ContentsWrapper style={{justifyContent: 'center', border: 'none'}}>
-                            <CustomNumberInput value={fluidQuantityVaporOutTube} onChange={setFluidQuantityVaporOutTube}/>
-                        </ContentsWrapper>
-                    </RowWarapper>
-                </ContentsWrapper>
-            </RowWarapper> */}
+                <RowWarapper>
+                    <ContentsWrapper>Fluid Name</ContentsWrapper>
+                    <ContentsWrapper style={{justifyContent: 'center'}}><Inner>{output.fluidNameShell}</Inner></ContentsWrapper>
+                    <ContentsWrapper style={{justifyContent: 'center'}}><Inner>{output.fluidNameTube}</Inner></ContentsWrapper>
+                </RowWarapper>
 
-            {/* Liquid */}
-            {/* <RowWarapper>
-                <ContentsWrapper><div style={{width: 30}} />Liquid</ContentsWrapper>
-                <ContentsWrapper>
-                    <RowWarapper>
-                        <ContentsWrapper style={{justifyContent: 'center', border: 'none'}}>
-                            <CustomNumberInput value={fluidQuantityLiquidInShell} onChange={setFluidQuantityLiquidInShell}/>
-                        </ContentsWrapper>
-                        <ContentsWrapper style={{justifyContent: 'center', border: 'none'}}>
-                            <CustomNumberInput value={fluidQuantityLiquidOutShell} onChange={setFluidQuantityLiquidOutShell}/>
-                        </ContentsWrapper>
-                    </RowWarapper>
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <RowWarapper>
-                        <ContentsWrapper style={{justifyContent: 'center', border: 'none'}}>
-                            <CustomNumberInput value={fluidQuantityLiquidInTube} onChange={setFluidQuantityLiquidInTube}/>
-                        </ContentsWrapper>
-                        <ContentsWrapper style={{justifyContent: 'center', border: 'none'}}>
-                            <CustomNumberInput value={fluidQuantityLiquidOutTube} onChange={setFluidQuantityLiquidOutTube}/>
-                        </ContentsWrapper>
-                    </RowWarapper>
-                </ContentsWrapper>
-            </RowWarapper> */}
+                <RowWarapper>
+                    <ContentsWrapper>Fluid Qunatity, Total<div style={{width: 60}} />kg/hr</ContentsWrapper>
+                    <ContentsWrapper style={{justifyContent: 'center'}}> <Inner>{output.fluidQuantityTotalShell}</Inner></ContentsWrapper>
+                    <ContentsWrapper style={{justifyContent: 'center'}}><Inner>{output.fluidQuantityTotalTube}</Inner></ContentsWrapper>
+                </RowWarapper>
+                {/* Vapor */}
+                <RowWarapper>
+                    <ContentsWrapper><div style={{width: 30}} />Vapor (In/Out)</ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.fluidQuantityVaporInShell}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.fluidQuantityVaporOutShell}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.fluidQuantityVaporInTube}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.fluidQuantityVaporOutTube}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                </RowWarapper>
 
-            {/* Steam */}
-            {/* <RowWarapper>
-                <ContentsWrapper><div style={{width: 30}} />Steam</ContentsWrapper>
-                <ContentsWrapper>
-                    <RowWarapper>
-                        <ContentsWrapper style={{justifyContent: 'center', border: 'none'}}>
-                            <CustomNumberInput value={fluidQuantitySteamInShell} onChange={setFluidQuantitySteamInShell}/>
-                        </ContentsWrapper>
-                        <ContentsWrapper style={{justifyContent: 'center', border: 'none'}}>
-                            <CustomNumberInput value={fluidQuantitySteamOutShell} onChange={setFluidQuantitySteamOutShell}/>
-                        </ContentsWrapper>
-                    </RowWarapper>
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <RowWarapper>
-                        <ContentsWrapper style={{justifyContent: 'center', border: 'none'}}>
-                            <CustomNumberInput value={fluidQuantitySteamInTube} onChange={setFluidQuantitySteamInTube}/>
-                        </ContentsWrapper>
-                        <ContentsWrapper style={{justifyContent: 'center', border: 'none'}}>
-                            <CustomNumberInput value={fluidQuantitySteamOutTube} onChange={setFluidQuantitySteamOutTube}/>
-                        </ContentsWrapper>
-                    </RowWarapper>
-                </ContentsWrapper>
-            </RowWarapper> */}
+                {/* Liquid */}
+                <RowWarapper>
+                    <ContentsWrapper><div style={{width: 30}} />Liquid</ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.fluidQuantityLiquidInShell}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.fluidQuantityLiquidOutShell}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.fluidQuantityLiquidInTube}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.fluidQuantityLiquidOutTube}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                </RowWarapper>
 
-            {/* Water */}
-            {/* <RowWarapper>
-                <ContentsWrapper><div style={{width: 30}} />Water</ContentsWrapper>
-                <ContentsWrapper>
-                    <RowWarapper>
-                        <ContentsWrapper style={{justifyContent: 'center', 'border': 'none'}}>
-                            <CustomNumberInput value={fluidQuantityWaterInShell} onChange={setFluidQuantityWaterInShell}/>
-                        </ContentsWrapper>
-                        <ContentsWrapper style={{justifyContent: 'center', 'border': 'none'}}>
-                            <CustomNumberInput value={fluidQuantityWaterOutShell} onChange={setFluidQuantityWaterOutShell}/>
-                        </ContentsWrapper>
-                    </RowWarapper>
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <RowWarapper>
-                        <ContentsWrapper style={{justifyContent: 'center', 'border': 'none'}}>
-                            <CustomNumberInput value={fluidQuantityWaterInTube} onChange={setFluidQuantityWaterInTube}/>
-                        </ContentsWrapper>
-                        <ContentsWrapper style={{justifyContent: 'center', 'border': 'none'}}>
-                            <CustomNumberInput value={fluidQuantityWaterOutTube} onChange={setFluidQuantityWaterOutTube}/>
-                        </ContentsWrapper>
-                    </RowWarapper>
-                </ContentsWrapper>
-            </RowWarapper> */}
+                {/* Steam */}
+                <RowWarapper>
+                    <ContentsWrapper><div style={{width: 30}} />Steam</ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.fluidQuantitySteamInShell}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.fluidQuantitySteamOutShell}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.fluidQuantitySteamInTube}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.fluidQuantitySteamOutTube}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                </RowWarapper>
 
-            {/* Noncondensables */}
-            {/* <RowWarapper>
-                <ContentsWrapper><div style={{width: 30}} />Noncondensables</ContentsWrapper>
-                <ContentsWrapper>
-                    <RowWarapper>
-                        <ContentsWrapper style={{justifyContent: 'center', border: 'none'}}>
-                            <CustomNumberInput value={fluidQuantityNoncondensablesInShell} onChange={setFluidQuantityNoncondensablesInShell}/>
-                        </ContentsWrapper>
-                        <ContentsWrapper style={{justifyContent: 'center', border: 'none'}}>
-                            <CustomNumberInput value={fluidQuantityNoncondensablesOutShell} onChange={setFluidQuantityNoncondensablesOutShell}/>
-                        </ContentsWrapper>
-                    </RowWarapper>
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <RowWarapper>
-                        <ContentsWrapper style={{justifyContent: 'center', border: 'none'}}>
-                            <CustomNumberInput value={fluidQuantityNoncondensablesInTube} onChange={setFluidQuantityNoncondensablesInTube}/>
-                        </ContentsWrapper>
-                        <ContentsWrapper style={{justifyContent: 'center', border: 'none'}}>
-                            <CustomNumberInput value={fluidQuantityNoncondensablesOutTube} onChange={setFluidQuantityNoncondensablesOutTube}/>
-                        </ContentsWrapper>
-                    </RowWarapper>
-                </ContentsWrapper>
-            </RowWarapper> */}
+                {/* Water */}
+                <RowWarapper>
+                    <ContentsWrapper><div style={{width: 30}} />Water</ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper>
+                            <ContentsWrapper style={{justifyContent: 'center', 'border': 'none', padding: 0}}>
+                                <Inner>{output.fluidQuantityWaterInShell}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', 'border': 'none', padding: 0}}>
+                                <Inner>{output.fluidQuantityWaterOutShell}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper>
+                            <ContentsWrapper style={{justifyContent: 'center', 'border': 'none', padding: 0}}>
+                                <Inner>{output.fluidQuantityWaterInTube}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', 'border': 'none', padding: 0}}>
+                                <Inner>{output.fluidQuantityWaterOutTube}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                </RowWarapper>
 
-            {/* Temperature */}
-            <RowWarapper>
-                <ContentsWrapper>Temperature (In/Out)<div style={{width: 60}} />°C</ContentsWrapper>
-                <ContentsWrapper>
+                {/* Noncondensables */}
+                <RowWarapper>
+                    <ContentsWrapper><div style={{width: 30}} />Noncondensables</ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.fluidQuantityNoncondensablesInShell}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.fluidQuantityNoncondensablesOutShell}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.fluidQuantityWaterOutTube}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.fluidQuantityWaterOutTube}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                </RowWarapper>
+
+                {/* Temperature */}
+                <RowWarapper>
+                    <ContentsWrapper>Temperature (In/Out)<div style={{width: 60}} />°C</ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.temperatureInShell}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.temperatureOutShell}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.temperatureInTube}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.temperatureOutTube}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                </RowWarapper>
+                {/* Specific Gravity */}
+                <RowWarapper>
+                    <ContentsWrapper>Specific Gravity</ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.specificGravityInShell}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.specificGravityOutShell}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.specificGravityInTube}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.specificGravityOutTube}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                </RowWarapper>
+                {/* Specific Gravity */}
+                <RowWarapper>
+                    <ContentsWrapper>Viscosity<div style={{width: 150}} />cP</ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.viscosityInShell}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.viscosityOutShell}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.viscosityInTube}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.viscosityOutTube}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                </RowWarapper>
+
+                {/* Molecular Weight */}
+                <RowWarapper>
+                    <ContentsWrapper>Molecular Weight</ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.molecularWeightInShell}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.molecularWeightOutShell}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.molecularWeightInTube}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.molecularWeightOutTube}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                </RowWarapper>
+
+                {/* Molecular Weight, Noncondensables */}
+                <RowWarapper>
+                    <ContentsWrapper>Molecular Weight, Noncondensables</ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.molecularWeightNoncondensableInShell}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.molecularWeightNoncondensableOutShell}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.molecularWeightNoncondensableInTube}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.molecularWeightNoncondensableOutTube}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                </RowWarapper>
+
+                {/* Sepcific Heat */}
+                <RowWarapper>
+                    <ContentsWrapper>Sepcific Heat<div style={{width: 120}}/>J/kg-C</ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.specificHeatInShell}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.specificHeatOutShell}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.specificHeatInTube}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.specificHeatOutTube}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                </RowWarapper>
+                {/* Sepcific Heat */}
+                <RowWarapper>
+                    <ContentsWrapper>Thermal Conductivity<div style={{width: 60}}/>W/m-C</ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.thermalConductivityInShell}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.thermalConductivityOutShell}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.thermalConductivityInTube}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.thermalConductivityOutTube}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                </RowWarapper>
+                {/* Latent Heat */}
+                <RowWarapper>
+                    <ContentsWrapper>Latent Heat<div style={{width: 132}}/>kJ/kg</ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.latentHeatInShell}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.latentHeatOutShell}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.latentHeatInTube}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.latentHeatOutTube}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                </RowWarapper>
+                {/* Inlet pressure */}
+                <RowWarapper>
+                    <ContentsWrapper>Inlet pressure<div style={{width: 120}} />barG</ContentsWrapper>
+                    <ContentsWrapper>
+                        <Inner>
+                            {output.inletPressureShell}
+                        </Inner>
+                    </ContentsWrapper>
+                    <ContentsWrapper>
+                        <Inner>
+                            {output.inletPressureTube}
+                        </Inner>
+                    </ContentsWrapper>
+                </RowWarapper>
+                {/* Velocity */}
+                <RowWarapper>
+                    <ContentsWrapper>Velocity<div style={{width: 160}} />m/s</ContentsWrapper>
+                    <ContentsWrapper>
+                        <Inner>
+                            {output.velocityShell}
+                        </Inner>
+                    </ContentsWrapper>
+                    <ContentsWrapper>
+                        <Inner>
+                            {output.velocityTybe}
+                        </Inner>
+                    </ContentsWrapper>
+                </RowWarapper>
+                {/* Pressure Drop, Allow/Calc */}
+                <RowWarapper>
+                    <ContentsWrapper>Pressure Drop, Allow/Calc<div style={{width: 35}}/>kPa</ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.pressureDropAllowShell}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.pressureDroCalcShell}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.pressureDropAllowTube}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <Inner>{output.pressureDroCalcTube}</Inner>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                </RowWarapper>
+                {/* Fouling Resistance */}
+                <RowWarapper>
+                    <ContentsWrapper>Fouling Resistance (min)<div style={{width: 42}} />m2-K/W</ContentsWrapper>
+                    <ContentsWrapper>
+                        <Inner>
+                            {output.foulingResistanceShell}
+                        </Inner>
+                    </ContentsWrapper>
+                    <ContentsWrapper>
+                        <Inner>
+                            {output.foulingResistanceTube}
+                        </Inner>
+                    </ContentsWrapper>
+                </RowWarapper>
+
+                <RowWarapper style={{border: '1px solid #ccc'}}>
                     <RowWarapper style={{gap: 10}}>
-                        <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                            <CustomNumberInput value={temperatureInShell} onChange={setTemperatureInShell}/>
-                        </ContentsWrapper>
-                        <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                            <CustomNumberInput value={temperatureOutShell} onChange={setTemperatureOutShell}/>
+                        <ContentsWrapper style={{border: 'none'}}>
+                            <div style={{width: 400, textAlign: 'left'}}>
+                            Heat Exchanged
+                            </div>
+                            {`${output.heatExchanged} KW`}
                         </ContentsWrapper>
                     </RowWarapper>
-                </ContentsWrapper>
-                <ContentsWrapper>
+                    <RowWarapper>
+                        <ContentsWrapper style={{border: 'none'}}>
+                            <div style={{width: 400, textAlign: 'left'}}>
+                            MTD (Corrected)
+                            </div>
+                            {`${output.MTD} C`}
+                        </ContentsWrapper>
+                    </RowWarapper>
+                </RowWarapper>
+
+                <RowWarapper style={{border: '1px solid #ccc'}}>
                     <RowWarapper style={{gap: 10}}>
-                        <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                            <CustomNumberInput value={temperatureInTube} onChange={setTemperatureInTube}/>
-                        </ContentsWrapper>
-                        <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                            <CustomNumberInput value={temperatureOutTube} onChange={setTemperatureOutTube}/>
-                        </ContentsWrapper>
-                    </RowWarapper>
-                </ContentsWrapper>
-            </RowWarapper>
-            {/* Vapor weight fraction */}
-            <RowWarapper>
-                <ContentsWrapper>Vapor weight fraction (In/Out)</ContentsWrapper>
-                <ContentsWrapper>
-                    <RowWarapper style={{gap: 10}}>
-                        <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                            <CustomNumberInput value={vaporWeightFractionInShell} onChange={setVaporWeightFractionInShell}/>
-                        </ContentsWrapper>
-                        <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                            <CustomNumberInput value={vaporWeightFractionOutShell} onChange={setVaporWeightFractionOutShell}/>
+                        <ContentsWrapper style={{border: 'none'}}>
+                            <div style={{width: 400, textAlign: 'left'}}>
+                            Transfer Rate, Service
+                            </div>
+                            {`${output.transferRateService} W/m2-K`}
                         </ContentsWrapper>
                     </RowWarapper>
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <RowWarapper style={{gap: 10}}>
-                        <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                            <CustomNumberInput value={vaporWeightFractionInTube} onChange={setVaporWeightFractionInTube}/>
-                        </ContentsWrapper>
-                        <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                            <CustomNumberInput value={vaporWeightFractionOutTube} onChange={setVaporWeightFractionOutTube}/>
+                    <RowWarapper>
+                        <ContentsWrapper style={{border: 'none'}}>
+                            <div style={{width: 100, textAlign: 'left'}}>
+                            Clean
+                            </div>
+                            {`${output.transferRateClean} W/m2-K`}
                         </ContentsWrapper>
                     </RowWarapper>
-                </ContentsWrapper>
-            </RowWarapper>
+                    <RowWarapper>
+                        <ContentsWrapper style={{border: 'none'}}>
+                            <div style={{width: 100, textAlign: 'left'}}>
+                            Actual
+                            </div>
+                            {`${output.transferRateActual} W/m2-K`}
+                        </ContentsWrapper>
+                    </RowWarapper>
+                </RowWarapper>
+                <RowWarapper>
+                <div style={{width: '60%'}}>
+                    <RowWarapper>
+                        <ContentsWrapper style={{fontWeight: 'bold', fontSize: 24, justifyContent: 'center'}}>CONSTRUCTION OF ONE SHELL</ContentsWrapper>
+                    </RowWarapper>
+                    <RowWarapper>
+                        <ContentsWrapper />
+                        <ContentsWrapper style={{justifyContent: 'center'}}>Shell Side</ContentsWrapper>
+                        <ContentsWrapper style={{justifyContent: 'center'}}>Tube Side</ContentsWrapper>
+                    </RowWarapper>
 
-            <RowWarapper>
-                <ContentsWrapper>Inlet pressure<div style={{width: 110}} />barG</ContentsWrapper>
-                <ContentsWrapper>
-                    <CustomNumberInput value={inletPressureShell} onChange={setInletPressureShell}/>
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <CustomNumberInput value={inletPressureTube} onChange={setInletPressureTube}/>
-                </ContentsWrapper>
-            </RowWarapper>
+                    <RowWarapper>
+                        <ContentsWrapper>Design/Test pressure<div style={{width: 60}} />barG</ContentsWrapper>
+                        <ContentsWrapper style={{justifyContent: 'center', gap: 10}}>
+                            <Inner>{output.designPressureShell}</Inner>
+                            /
+                            <Inner>{output.testPressureShell}</Inner>
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{justifyContent: 'center', gap: 10}}>
+                            <Inner>{output.designPressureTube}</Inner>
+                            /
+                            <Inner>{output.testPressureTube}</Inner>
+                        </ContentsWrapper>
+                    </RowWarapper>
+                    <RowWarapper>
+                        <ContentsWrapper>Design Temperature<div style={{width: 60}} />°C</ContentsWrapper>
+                        <ContentsWrapper style={{justifyContent: 'center'}}>
+                            <Inner>{output.designTemperatureShell}</Inner>
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{justifyContent: 'center'}}>
+                            <Inner>{output.designTemperatureTube}</Inner>
+                        </ContentsWrapper>
+                    </RowWarapper>
+                    <RowWarapper>
+                        <ContentsWrapper>Number passes per shell</ContentsWrapper>
+                        <ContentsWrapper style={{justifyContent: 'center'}}>
+                            <Inner>{output.numberPassesShell}</Inner>
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{justifyContent: 'center'}}>
+                            <Inner>{output.numberPassesTube}</Inner>
+                        </ContentsWrapper>
+                    </RowWarapper>
+                    <RowWarapper>
+                        <ContentsWrapper>Corrosion allowance<div style={{width: 60}} />mm</ContentsWrapper>
+                        <ContentsWrapper style={{justifyContent: 'center'}}>
+                            <Inner>{output.corrosionAllowanceShell}</Inner>
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{justifyContent: 'center'}}>
+                            <Inner>{output.corrosionAllowanceTube}</Inner>
+                        </ContentsWrapper>
+                    </RowWarapper>
 
-            <RowWarapper>
-                <ContentsWrapper>Pressure drop, allow.<div style={{width: 60}} />kPa</ContentsWrapper>
-                <ContentsWrapper>
-                    <CustomNumberInput value={pressureDropShell} onChange={setPressureDropShell}/>
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <CustomNumberInput value={pressureDropTube} onChange={setPressureDropTube}/>
-                </ContentsWrapper>
-            </RowWarapper>
-
-            {/* Fouling Resistance */}
-            <RowWarapper>
-                <ContentsWrapper>Fouling Resistance (mm)<div style={{width: 30}} />m2-KW</ContentsWrapper>
-                <ContentsWrapper>
-                    <CustomNumberInput value={foulingResistanceShell} onChange={setFoulingResistanceShell}/>
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <CustomNumberInput value={foulingResistanceTube} onChange={setFoulingResistanceTube}/>
-                </ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>Exchanger duty<div style={{width: 100}} />KW</ContentsWrapper>
-                <ContentsWrapper style={{border: 'none'}}>
-                    <CustomNumberInput value={exchangerDuty} onChange={setExchangerDuty}/>
-                </ContentsWrapper>
-                <ContentsWrapper style={{border: 'none'}}/>
-            </RowWarapper>
-
-            {/* GEOMETRY Header */}
-            <RowWarapper>
-                <ContentsWrapper style={{fontWeight: 'bold', fontSize: 16, justifyContent: 'center'}}>GEOMETRY</ContentsWrapper>
-            </RowWarapper>
-            {/* Shell & Baffle */}
-            <RowWarapper>
-                <ContentsWrapper style={{justifyContent: 'center'}}>Shell Geometry</ContentsWrapper>
-                <ContentsWrapper style={{justifyContent: 'center'}}>Baffle Geometry</ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none', padding: 0}}>
-                            TEMA type
+                    <RowWarapper>
+                        <RowWarapper>
+                            <RowWarapper>
+                                <ContentsWrapper>
+                                    Connection Size & Rating
+                                </ContentsWrapper>
+                            </RowWarapper>
+                            <ColumnWrapper>
+                                <ContentsWrapper>
+                                    In<div style={{width: 100}}/>mm
+                                </ContentsWrapper>
+                                <ContentsWrapper>
+                                    Out<div style={{width: 85}}/>mm
+                                </ContentsWrapper>
+                                <ContentsWrapper>
+                                    Inermediate<div style={{width: 25}}/>mm
+                                </ContentsWrapper>
+                            </ColumnWrapper>
+                        </RowWarapper>
+                        <RowWarapper>
+                            <ColumnWrapper>
+                                <ContentsWrapper style={{gap: 10}}>
+                                    <Inner>{output.connectionSizeShellIn1}</Inner>
+                                    @
+                                    <Inner>{output.connectionSizeShellIn2}</Inner>
+                                </ContentsWrapper>
+                                <ContentsWrapper style={{gap: 10}}>
+                                    <Inner>{output.connectionSizeShellOut1}</Inner>
+                                    @
+                                    <Inner>{output.connectionSizeShellOut2}</Inner>
+                                </ContentsWrapper>
+                                <ContentsWrapper style={{gap: 10}}>
+                                    <Inner>{output.connectionSizeShellIntermediate1}</Inner>
+                                    @
+                                    <Inner>{output.connectionSizeShellIntermediate2}</Inner>
+                                </ContentsWrapper>
+                            </ColumnWrapper>
+                        </RowWarapper>
+                        <RowWarapper>
+                            <ColumnWrapper>
+                                <ContentsWrapper style={{gap: 10}}>
+                                    <Inner>{output.connectionSizeTubeIn1}</Inner>
+                                    @
+                                    <Inner>{output.connectionSizeTubeIn2}</Inner>
+                                </ContentsWrapper>
+                                <ContentsWrapper style={{gap: 10}}>
+                                    <Inner>{output.connectionSizeTubeOut1}</Inner>
+                                    @
+                                    <Inner>{output.connectionSizeTubeOut2}</Inner>
+                                </ContentsWrapper>
+                                <ContentsWrapper style={{gap: 10}}>
+                                    <Inner>{output.connectionSizeTubeIntermediate1}</Inner>
+                                    @
+                                    <Inner>{output.connectionSizeTubeIntermediate2}</Inner>
+                                </ContentsWrapper>
+                            </ColumnWrapper>
+                        </RowWarapper>
+                    </RowWarapper>
+                </div>
+                <div style={{width: '40%'}}>
+                    <RowWarapper>
+                        <ContentsWrapper style={{fontWeight: 'bold', fontSize: 24, justifyContent: 'center'}}>Sketch (Bundle/Nozzle Orientation)</ContentsWrapper>
+                    </RowWarapper>
+                </div>
+                </RowWarapper>
+                <RowWarapper style={{border: '1px solid #ccc'}}>
+                    <ContentsWrapper style={{border: 'none'}}>
+                        <div style={{width: 120, flexShrink: 0, textAlign: 'left'}}>
+                            Tube No.
+                        </div>
+                        {output.tubeNo}
                     </ContentsWrapper>
-                    <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                        <CustomDropdown
-                            value={temaType}
-                            onChange={setTEMAType}
-                            options={[
-                                "Single Segmental",
-                                "Double Segmental",
-                                "Triple Segmental",
-                                "No Baffle",
-                                "Helical"
-                            ]}
-                            placeholder="Select TEMA"
-                        />
+                    <ContentsWrapper style={{border: 'none'}}>
+                        <div style={{width: 120, flexShrink: 0, textAlign: 'left'}}>
+                            OD
+                        </div>
+                        {`${output.OD} mm`}
                     </ContentsWrapper>
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none', padding: 0}}>
-                            Baffle type
+                    <ContentsWrapper style={{border: 'none'}}>
+                        <div style={{width: 120, flexShrink: 0, textAlign: 'left'}}>
+                            Thk (Avg)
+                        </div>
+                        {`${output.Thk} mm`}
                     </ContentsWrapper>
-                    <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                        <CustomDropdown
-                            value={baffleType}
-                            onChange={setBaffleType}
-                            options={[
-                                "Single Segmental",
-                                "Double Segmental",
-                                "Triple Segmental",
-                                "No Baffle",
-                                "Helical"
-                            ]}
-                            placeholder="Select baffle"
-                        />
+                    <ContentsWrapper style={{border: 'none'}}>
+                        <div style={{width: 120, flexShrink: 0, textAlign: 'left'}}>
+                            Length
+                        </div>
+                        {`${output.length} m`}
                     </ContentsWrapper>
-                </ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none', padding: 0}}>
-                            Shell ID (mm)
+                    <ContentsWrapper style={{border: 'none'}}>
+                        <div style={{width: 120, flexShrink: 0, textAlign: 'left'}}>
+                            Pitch
+                        </div>
+                        {`${output.pitch} mm`}
                     </ContentsWrapper>
-                    <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                        <CustomNumberInput value={shellID} onChange={setShellID}/>
-                    </ContentsWrapper>
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none', padding: 0}}>
-                            Baffle cut (Pct Dia.)
-                    </ContentsWrapper>
-                    <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                        <CustomNumberInput value={baffleCut} onChange={setBaffleCut}/>
-                    </ContentsWrapper>
-                </ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none', padding: 0}}>
-                        Series
-                    </ContentsWrapper>
-                    <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                        <CustomNumberInput value={series} onChange={setSeries}/>
-                    </ContentsWrapper>
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none', padding: 0}}>
-                        Baffle orientation
-                    </ContentsWrapper>
-                    <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                        <CustomDropdown
-                            value={baffleOrientation}
-                            onChange={setBaffleOrientation}
-                            options={[
-                                "Single Segmental",
-                                "Double Segmental",
-                                "Triple Segmental",
-                                "No Baffle",
-                                "Helical"
-                            ]}
-                            placeholder="Select baffle orientation"
-                        />
-                    </ContentsWrapper>
-                </ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none', padding: 0}}>
-                        Parallel
-                    </ContentsWrapper>
-                    <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                        <CustomNumberInput value={parallel} onChange={setParallel}/>
-                    </ContentsWrapper>
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none', padding: 0}}>
-                        Central Spacing (mm)
-                    </ContentsWrapper>
-                    <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                        <CustomNumberInput value={centralSpacing} onChange={setCentralSpacing}/>
-                    </ContentsWrapper>
-                </ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none', padding: 0}}>
-                        Orientation (deg)
-                    </ContentsWrapper>
-                    <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                        <CustomNumberInput value={orientation} onChange={setOrientation}/>
-                    </ContentsWrapper>
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none', padding: 0}}>
-                        Crosspasses
-                    </ContentsWrapper>
-                    <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                        <CustomNumberInput value={crosspasses} onChange={setCrosspasses}/>
-                    </ContentsWrapper>
-                </ContentsWrapper>
-            </RowWarapper>
-
-            {/* Tube & Nozzles */}
-            <RowWarapper>
-                <ContentsWrapper style={{justifyContent: 'center'}}>Tube Geometry</ContentsWrapper>
-                <ContentsWrapper style={{justifyContent: 'center'}}>Nozzles</ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none', padding: 0}}>
-                            Tube type
-                    </ContentsWrapper>
-                    <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                        <CustomDropdown
-                            value={tubeType}
-                            onChange={setTubeType}
-                            options={[
-                                "Single Segmental",
-                                "Double Segmental",
-                                "Triple Segmental",
-                                "No Baffle",
-                                "Helical"
-                            ]}
-                            placeholder="Select tube"
-                        />
-                    </ContentsWrapper>
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none', padding: 0}}>
-                           Shell inlet (mm)
-                    </ContentsWrapper>
-                    <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                        <CustomNumberInput value={shellInlet} onChange={setShellInlet}/>
-                    </ContentsWrapper>
-                </ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none', padding: 0}}>
-                            Tube OD (mm)
-                    </ContentsWrapper>
-                    <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                        <CustomNumberInput value={tubeOD} onChange={setTubeOD}/>
-                    </ContentsWrapper>
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none', padding: 0}}>
-                            Shell outlet (mm)
-                    </ContentsWrapper>
-                    <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                        <CustomNumberInput value={shellOutlet} onChange={setShellOutlet}/>
-                    </ContentsWrapper>
-                </ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none', padding: 0}}>
-                        Length (m)
-                    </ContentsWrapper>
-                    <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                        <CustomNumberInput value={length} onChange={setLength}/>
-                    </ContentsWrapper>
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none', padding: 0}}>
-                        Inlet Hight (mm)
-                    </ContentsWrapper>
-                    <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                        <CustomNumberInput value={inletHight} onChange={setInletHight}/>
-                    </ContentsWrapper>
-                </ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none', padding: 0}}>
-                        Pitch Ratio
-                    </ContentsWrapper>
-                    <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                        <CustomNumberInput value={pitchRatio} onChange={setPitchRatio}/>
-                    </ContentsWrapper>
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none', padding: 0}}>
-                        Outlet Hight (mm)
-                    </ContentsWrapper>
-                    <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                        <CustomNumberInput value={outletHight} onChange={setOutletHight}/>
-                    </ContentsWrapper>
-                </ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none', padding: 0}}>
-                        Layout (deg)
-                    </ContentsWrapper>
-                    <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                        <CustomNumberInput value={layout} onChange={setLayout}/>
-                    </ContentsWrapper>
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none', padding: 0}}>
-                        Tube inlet (mm)
-                    </ContentsWrapper>
-                    <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                        <CustomNumberInput value={tubeInlet} onChange={setTubeInlet}/>
-                    </ContentsWrapper>
-                </ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none', padding: 0}}>
-                        Tubecount
-                    </ContentsWrapper>
-                    <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                        <CustomNumberInput value={tubeCount} onChange={setTubeCount}/>
-                    </ContentsWrapper>
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none', padding: 0}}>
-                        Tube outlet (mm)
-                    </ContentsWrapper>
-                    <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                        <CustomNumberInput value={tubeOutlet} onChange={setTubeOutlet}/>
-                    </ContentsWrapper>
-                </ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none', padding: 0}}>
-                        Tube Pass
-                    </ContentsWrapper>
-                    <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                        <CustomNumberInput value={tubePass} onChange={setTubePass}/>
-                    </ContentsWrapper>
-                </ContentsWrapper>
-                <ContentsWrapper />
-            </RowWarapper>
-        </FrameWrapper>
+                </RowWarapper>
+            </FrameWrapper>
+            <ButtonWrapper>
+                <button onClick={handleExportPDF}>export to PDF</button>
+                <button onClick={handletoInput}>back to input page</button>
+            </ButtonWrapper>
+            <div style={{ width: '100%', display: 'block', textAlign: 'right'}}>© 2025 MyTech. All Rights Reserved.</div>
+        </div>
     );
 }

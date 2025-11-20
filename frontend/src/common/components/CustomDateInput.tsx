@@ -20,7 +20,7 @@ const CustomDateInput: React.FC<CustomDateInputProps> = ({
       display: "flex",
       flexDirection: "column",
       gap: 4,
-      width: "100%"
+      width: "100%",
     }}>
       {label && <label style={{ fontSize: 14 }}>{label}</label>}
       
@@ -32,7 +32,8 @@ const CustomDateInput: React.FC<CustomDateInputProps> = ({
           height: 35,
           fontSize: 14,
           outline: "none",
-          border: "none"
+          border: "none",
+          backgroundColor: '#ececec'
         }}
       />
     </div>

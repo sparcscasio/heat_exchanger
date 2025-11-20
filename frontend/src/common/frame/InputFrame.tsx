@@ -4,6 +4,7 @@ import CustomNumberInput from "../components/NumberInput";
 import CustomInput from "../components/CustomInput";
 import CustomDropdown from "../components/CustomDropdown";
 import CustomDateInput from "../components/CustomDateInput";
+import type { OutputType } from "../type/Output";
 
 const RowWarapper = styled.div`
     display: flex; 
@@ -40,7 +41,13 @@ const ContentsWrapper = styled.div`
     box-sizing: border-box;
 `;
 
-export default function InputFrame() {
+interface InputFrameProps {
+  setOutput: React.Dispatch<React.SetStateAction<OutputType>>;
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsInput: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+export default function InputFrame({setOutput, setLoading, setIsInput} : InputFrameProps) {
     const [unitIdentifier, setUnitIdentifier] = useState<string>('');
     const [caseMode, setCaseMode] = useState<string>('');
     const [serviceType, setServiceType] = useState<string>('');
@@ -74,8 +81,8 @@ export default function InputFrame() {
     const [vaporWeightFractionOutTube, setVaporWeightFractionOutTube] = useState<string>('');
     const [inletPressureShell, setInletPressureShell] = useState<string>('');
     const [inletPressureTube, setInletPressureTube] = useState<string>('');
-    const [pressureDropShell, setPressureDropShell] = useState<string>('');
-    const [pressureDropTube, setPressureDropTube] = useState<string>('');
+    const [pressureDropAllowShell, setPressureDropAllowShell] = useState<string>('');
+    const [pressureDropAllowTube, setPressureDropAllowTube] = useState<string>('');
     const [exchangerDuty, setExchangerDuty] = useState<string>('');
     const [temperatureInShell, setTemperatureInShell] = useState<string>('');
     const [temperatureOutShell, setTemperatureOutShell] = useState<string>('');
@@ -114,6 +121,7 @@ export default function InputFrame() {
     const [Thk, setThk] = useState<string>('');
     const [length, setLength] = useState<string>('');
     const [pitch, setPitch] = useState<string>('');
+    const [itemNo, setItemNo] = useState<string>('');
 
 
     const errorFunction = (v: string) => {
@@ -124,10 +132,75 @@ export default function InputFrame() {
     }
 
     const handleOnCalculate = () => {
-        console.log('calculate');
+        setLoading(true);
+        setOutput(prev => ({
+            ...prev,
+            customer: customer,
+            jobNo: jobNo,
+            referenceNo: refNo,
+            address: address,
+            proposalNo: proposalNo,
+            plantLocation: location,
+            date: date,
+            rev: rev,
+            serviceOfUnit: serviceUnit,
+            itemNo: itemNo,
+            type1: type1,
+            type2: type2,
+            type3: type3,
+            orientation: orientation,
+            connectParallel: connectParallel,
+            connectSeries: connectSeries,
+            fluidNameShell: fluidNameShell,
+            fluidNameTube: fluidNameTube,
+            fluidQuantityTotalShell: fluidQuantityTotalShell,
+            fluidQuantityTotalTube: fluidQuantityTotalTube,
+            temperatureInShell: temperatureInShell,
+            temperatureOutShell: temperatureOutShell,
+            temperatureInTube: temperatureInTube,
+            temperatureOutTube: temperatureOutTube,
+            inletPressureShell: inletPressureShell,
+            inletPressureTube: inletPressureTube,
+            pressureDropAllowShell: pressureDropAllowShell,
+            pressureDropAllowTube: pressureDropAllowTube,
+            foulingResistanceShell: foulingResistanceShell,
+            foulingResistanceTube: foulingResistanceTube,
+            designPressureShell: designPressureShell,
+            testPressureShell: testPressureShell,
+            designPressureTube: designPressureTube,
+            testPressureTube: testPressureTube,
+            designTemperatureShell: designTemperatureShell,
+            designTemperatureTube: designTemperatureTube,
+            numberPassesShell: numberPassesShell,
+            numberPassesTube: numberPassesTube,
+            corrosionAllowanceShell: corrosionAllowanceShell,
+            corrosionAllowanceTube: corrosionAllowanceTube,
+            connectionSizeShellIn1: connectionSizeShellIn1,
+            connectionSizeShellIn2: connectionSizeShellIn2,
+            connectionSizeShellOut1: connectionSizeShellOut1,
+            connectionSizeShellOut2: connectionSizeShellOut2,
+            connectionSizeShellIntermediate1: connectionSizeShellIntermediate1,
+            connectionSizeShellIntermediate2: connectionSizeShellIntermediate2,
+            connectionSizeTubeIn1: connectionSizeTubeIn1,
+            connectionSizeTubeIn2: connectionSizeTubeIn2,
+            connectionSizeTubeOut1: connectionSizeTubeOut1,
+            connectionSizeTubeOut2: connectionSizeTubeOut2,
+            connectionSizeTubeIntermediate1: connectionSizeTubeIntermediate1,
+            connectionSizeTubeIntermediate2: connectionSizeTubeIntermediate2,
+            tubeNo: tubeNo,
+            OD: OD,
+            Thk: Thk,
+            length: length,
+            pitch: pitch
+        }));
+        setTimeout(() => {
+            setIsInput(false);
+            setLoading(false);
+        }, 2000);
     }
     
     return (
+         <div style={{display: 'flex', flexDirection: 'column', gap: 20, width: '100%'}}>
         <FrameWrapper>
             <RowWarapper>
                 <ContentsWrapper style={{fontWeight: 'bold', fontSize: 40, justifyContent: 'space-between'}}>
@@ -313,7 +386,7 @@ export default function InputFrame() {
                     <div style={{width: 120, textAlign: 'left'}}>
                         Item No.
                     </div>
-                    <CustomDateInput value={date} onChange={setDate}/>
+                    <CustomNumberInput value={itemNo} onChange={setItemNo}/>
                 </ContentsWrapper>
             </RowWarapper>
             <RowWarapper>
@@ -434,10 +507,10 @@ export default function InputFrame() {
             <RowWarapper>
                 <ContentsWrapper>Pressure drop, allow.<div style={{width: 60}} />kPa</ContentsWrapper>
                 <ContentsWrapper>
-                    <CustomNumberInput value={pressureDropShell} onChange={setPressureDropShell}/>
+                    <CustomNumberInput value={pressureDropAllowShell} onChange={setPressureDropAllowShell}/>
                 </ContentsWrapper>
                 <ContentsWrapper>
-                    <CustomNumberInput value={pressureDropTube} onChange={setPressureDropTube}/>
+                    <CustomNumberInput value={pressureDropAllowTube} onChange={setPressureDropAllowTube}/>
                 </ContentsWrapper>
             </RowWarapper>
 
@@ -590,7 +663,8 @@ export default function InputFrame() {
                     mm
                 </ContentsWrapper>
             </RowWarapper>
-            
         </FrameWrapper>
+        <div style={{height: 10, width: '100%', display: 'block', textAlign: 'right'}}>© 2025 MyTech. All Rights Reserved.</div>
+        </div>
     );
 }

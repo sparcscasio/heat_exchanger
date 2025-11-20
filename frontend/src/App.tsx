@@ -2,6 +2,7 @@ import { useState } from 'react';
 import './App.css';
 import InputFrame from './common/frame/InputFrame';
 import OutputFrame from './common/frame/OutputFrame';
+import type { OutputType } from './common/type/Output';
 
 interface OutPutExcel {
   Tube_ea: number;
@@ -142,6 +143,131 @@ function App() {
   const [result, setResult] = useState<Result | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
+  const initialoutput: OutputType = {
+    customer: '',
+    jobNo: '',
+    address: '',
+    referenceNo: '',
+    plantLocation: '',
+    proposalNo: '',
+    date: '',
+    rev: '',
+    serviceOfUnit: '',
+    itemNo: '',
+    sizeHorizontal: '',
+    sizeVertical: '',
+    type1: '',
+    type2: '',
+    type3: '',
+    orientation: '',
+    connectParallel: '',
+    connectSeries: '',
+    surfUnitGross: '',
+    surfUnitEff: '',
+    shellUnit: '',
+    surfShellGross: '',
+    surfShellEff: '',
+    fluidNameShell: '',
+    fluidNameTube: '',
+    fluidQuantityTotalShell: '',
+    fluidQuantityTotalTube: '',
+    fluidQuantityVaporInTube: '',
+    fluidQuantityVaporOutTube: '',
+    fluidQuantityLiquidInTube: '',
+    fluidQuantityLiquidOutTube: '',
+    fluidQuantitySteamInTube: '',
+    fluidQuantitySteamOutTube: '',
+    fluidQuantityWaterInTube: '',
+    fluidQuantityWaterOutTube: '',
+    fluidQuantityNoncondensablesInTube: '',
+    fluidQuantityNoncondensablesOutTube: '',
+    fluidQuantityVaporInShell: '',
+    fluidQuantityVaporOutShell: '',
+    fluidQuantityLiquidInShell: '',
+    fluidQuantityLiquidOutShell: '',
+    fluidQuantitySteamInShell: '',
+    fluidQuantitySteamOutShell: '',
+    fluidQuantityWaterInShell: '',
+    fluidQuantityWaterOutShell: '',
+    fluidQuantityNoncondensablesInShell: '',
+    fluidQuantityNoncondensablesOutShell: '',
+    temperatureInShell: '',
+    temperatureOutShell: '',
+    temperatureInTube: '',
+    temperatureOutTube: '',
+    specificGravityInShell: '',
+    specificGravityOutShell: '',
+    specificGravityInTube: '',
+    specificGravityOutTube: '',
+    viscosityInShell: '',
+    viscosityOutShell: '',
+    viscosityInTube: '',
+    viscosityOutTube: '',
+    molecularWeightInShell: '',
+    molecularWeightOutShell: '',
+    molecularWeightInTube: '',
+    molecularWeightOutTube: '',
+    molecularWeightNoncondensableInShell: '',
+    molecularWeightNoncondensableOutShell: '',
+    molecularWeightNoncondensableInTube: '',
+    molecularWeightNoncondensableOutTube: '',
+    specificHeatInShell: '',
+    specificHeatOutShell: '',
+    specificHeatInTube: '',
+    specificHeatOutTube: '',
+    thermalConductivityInShell: '',
+    thermalConductivityOutShell: '',
+    thermalConductivityInTube: '',
+    thermalConductivityOutTube: '',
+    latentHeatInShell: '',
+    latentHeatOutShell: '',
+    latentHeatInTube: '',
+    latentHeatOutTube: '',
+    inletPressureShell: '',
+    inletPressureTube: '',
+    velocityShell: '',
+    velocityTybe: '',
+    pressureDropAllowShell: '',
+    pressureDropAllowTube: '',
+    pressureDroCalcShell: '',
+    pressureDroCalcTube: '',
+    foulingResistanceShell: '',
+    foulingResistanceTube: '',
+    heatExchanged: '',
+    MTD: '',
+    transferRateService: '',
+    transferRateClean: '',
+    transferRateActual: '',
+    designPressureShell: '',
+    testPressureShell: '',
+    designPressureTube: '',
+    testPressureTube: '',
+    designTemperatureShell: '',
+    designTemperatureTube: '',
+    numberPassesShell: '',
+    numberPassesTube: '',
+    corrosionAllowanceShell: '',
+    corrosionAllowanceTube: '',
+    connectionSizeTubeIn1: '',
+    connectionSizeTubeIn2: '',
+    connectionSizeTubeOut1: '',
+    connectionSizeTubeOut2: '',
+    connectionSizeTubeIntermediate1: '',
+    connectionSizeTubeIntermediate2: '',
+    connectionSizeShellIn1: '',
+    connectionSizeShellIn2: '',
+    connectionSizeShellOut1: '',
+    connectionSizeShellOut2: '',
+    connectionSizeShellIntermediate1: '',
+    connectionSizeShellIntermediate2: '',
+    tubeNo: '',
+    OD: '',
+    Thk: '',
+    length: '',
+    pitch: ''
+  };
+
+
   const initialInputs: Inputs = {
     Cold_Q: 12400,
     La_Heat: 0,
@@ -211,6 +337,8 @@ function App() {
   };
 
   const [inputs, setInputs] = useState<Inputs>(initialInputs);
+  const [output, setOutput] = useState<OutputType>(initialoutput);
+  const [isInput, setIsInput] = useState<boolean>(true);
 
   const handleChange = (key : keyof Inputs, value : string) => {
     const current = initialInputs[key];
@@ -248,64 +376,10 @@ function App() {
   };
 
   // return <InputFrame />;
-  return <OutputFrame />;
-
-  //return (
-    // <div className="App">
-      {/* <header className="App-header">
-        <h1>React ↔ Flask 연결 테스트</h1>
-        <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-          gap: "10px",
-        }}
-      >
-        {Object.entries(inputs).map(([key, value]) => (
-          <div key={key} style={{ display: "flex", flexDirection: "column" }}>
-            <label style={{ fontWeight: "bold" }}>{key}</label>
-            <input
-              type={typeof initialInputs[key as keyof Inputs] === "number" ? "number" : "text"}
-              step="any"
-              value={value}
-              onChange={(e) => handleChange(key as keyof Inputs, e.target.value)}
-            />
-          </div>
-        ))}
-      </div>
-        <button onClick={handleCalculate} disabled={loading}>
-          {loading ? '계산 중...' : 'Flask 계산 실행'}
-        </button>
-
-        {result && (
-          <div style={{ marginTop: 20 }}>
-            {result.image && (
-              <img src={result.image} alt="Plot" style={{ width: '400px', height: 'auto' }} />
-            )}
-            <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-              gap: "10px",
-            }}
-            >
-              {Object.entries(result.excelData!).map(([key, value]) => (
-                <div key={key} style={{ display: "flex", flexDirection: "column" }}>
-                  <label style={{ fontWeight: "bold" }}>{key}</label>
-                  <input
-                    step="any"
-                    value={value}
-                    onChange={() => {}}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-          
-        )}
-      </header> */}
-    // </div>
-  //);
+  if (isInput) {
+    return <InputFrame setOutput={setOutput} setLoading={setLoading} setIsInput={setIsInput} />
+  }
+  return <OutputFrame output={output} setIsInput={setIsInput}/>;
 }
 
 export default App;

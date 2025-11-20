@@ -25,6 +25,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
         outline: 'none',
         border: 'none',
         textAlign: 'center',
+        backgroundColor: '#ececec'
       }}
     >
       <option value="" disabled>
