@@ -5,6 +5,8 @@ import CustomInput from "../components/CustomInput";
 import CustomDropdown from "../components/CustomDropdown";
 import CustomDateInput from "../components/CustomDateInput";
 import type { OutputType } from "../type/Output";
+import { mixture } from "../const/mixture";
+import { exampleInput } from "../const/mock";
 
 const RowWarapper = styled.div`
     display: flex; 
@@ -131,6 +133,28 @@ export default function InputFrame({setOutput, setLoading, setIsInput} : InputFr
         return false;
     }
 
+    const handleCalculate = async () => {
+        try {
+        const inputs = exampleInput;
+        console.log('inputs', JSON.stringify(inputs));
+
+        const response = await fetch('http://127.0.0.1:5000/api/simulate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(inputs),
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log(data);
+        } catch (error: any) {
+        console.error('Error:', error);
+        }
+    };
+
     const handleOnCalculate = () => {
         setLoading(true);
         setOutput(prev => ({
@@ -193,6 +217,7 @@ export default function InputFrame({setOutput, setLoading, setIsInput} : InputFr
             length: length,
             pitch: pitch
         }));
+        handleCalculate();
         setTimeout(() => {
             setIsInput(false);
             setLoading(false);
