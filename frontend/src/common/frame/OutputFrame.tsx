@@ -1,6 +1,7 @@
 import styled from "@emotion/styled";
 import { useRef } from "react";
 import type { OutputType } from "../type/Output";
+import SketchFrame from "./SketchFrame";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
@@ -60,24 +61,20 @@ const ButtonWrapper = styled.div`
 interface OutputFrameProps {
     output: OutputType;
     setIsInput: React.Dispatch<React.SetStateAction<boolean>>;
+    setLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export default function OutputFrame({ output, setIsInput}: OutputFrameProps) {
-    const targetRef = useRef<HTMLDivElement>(null);
-    
-    console.log(output);
-    const handleExportPDF = async () => {
-        if (!targetRef.current) return;
+export default function OutputFrame({ output, setIsInput, setLoading}: OutputFrameProps) {
+    const sketchRef = useRef<HTMLDivElement>(null);
 
-        const element = targetRef.current;
+    const handleDownloadPDF = async () => {
+        if (!sketchRef.current) return;
 
-        // HTML → Canvas 변환
+        const element = sketchRef.current;
+
         const canvas = await html2canvas(element, { scale: 2 });
-
         const imgData = canvas.toDataURL("image/png");
-
-        // PDF 생성
-        const pdf = new jsPDF("p", "mm", "a4");
+        const pdf = new jsPDF("landscape", "mm", "a4");
 
         const pageWidth = pdf.internal.pageSize.getWidth();
         const imgProps = pdf.getImageProperties(imgData);
@@ -87,6 +84,53 @@ export default function OutputFrame({ output, setIsInput}: OutputFrameProps) {
         pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
         pdf.save("output.pdf");
     };
+    
+    console.log(output);
+
+    const handleExportExcel = async () => {
+        try {
+            const inputs = output;
+            console.log(inputs);
+            setLoading(true);
+            const response = await fetch('http://127.0.0.1:5000/api/excel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(inputs),
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            // Blob으로 받기
+            const blob = await response.blob();
+            setLoading(false);
+
+            // Blob → 다운로드 링크 만들기
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'result.xlsx';  // 다운로드될 파일명
+            a.click();
+
+            // URL 해제
+            window.URL.revokeObjectURL(url);
+
+            console.log('success!');
+        } catch (error: any) {
+            console.error('Error:', error);
+        } 
+    };
+
+    const handleExportPDF = async () => {
+        await handleExportExcel();
+        console.log('done');
+        setLoading(true);
+        await handleDownloadPDF();
+        setLoading(false);
+    }
 
     const handletoInput = () => {
         setIsInput(true);
@@ -94,7 +138,7 @@ export default function OutputFrame({ output, setIsInput}: OutputFrameProps) {
     
     return (
         <div style={{display: 'flex', flexDirection: 'column', gap: 20, width: '100%'}}>
-            <FrameWrapper ref={targetRef}>
+            <FrameWrapper>
                 <RowWarapper style={{border: '1px solid #ccc'}}>
                     <div style={{fontSize: 70, fontWeight: 'bold', border: 'none'}}>MY LOGO</div>
                     <ContentsWrapper style={{fontWeight: 'bold', fontSize: 24, justifyContent: 'center', border: 'none'}}>
@@ -144,13 +188,13 @@ export default function OutputFrame({ output, setIsInput}: OutputFrameProps) {
                     </ContentsWrapper>
                     <ContentsWrapper style={{border: 'none'}}>
                         <ContentsWrapper style={{border: 'none', padding: 0}}>
-                            <div style={{width: 200, textAlign: 'left'}}>
+                            <div style={{width: 150, textAlign: 'left'}}>
                                 Date
                             </div>
                             <Inner style={{justifyContent: 'flex-start'}}>{output.date}</Inner>
                         </ContentsWrapper>
                         <ContentsWrapper style={{border: 'none', padding: 0}}>
-                            <div style={{width: 200, textAlign: 'left'}}>
+                            <div style={{width: 150, textAlign: 'left'}}>
                                 Rev
                             </div>
                             <Inner style={{justifyContent: 'flex-start'}}>{output.rev}</Inner>
@@ -184,7 +228,7 @@ export default function OutputFrame({ output, setIsInput}: OutputFrameProps) {
                         </div>
                         <Inner style={{justifyContent: 'flex-start'}}>
                             <div style={{width: 100, textAlign: 'left'}}>
-                                {`${output.type1}${output.type2}${output.type3}`}
+                                {`${output.type}`}
                             </div>
                             {`${output.orientation}`}
                         </Inner>
@@ -357,10 +401,10 @@ export default function OutputFrame({ output, setIsInput}: OutputFrameProps) {
                     <ContentsWrapper>
                         <RowWarapper>
                             <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                                <Inner>{output.fluidQuantityWaterOutTube}</Inner>
+                                <Inner>{output.fluidQuantityNoncondensablesInTube}</Inner>
                             </ContentsWrapper>
                             <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                                <Inner>{output.fluidQuantityWaterOutTube}</Inner>
+                                <Inner>{output.fluidQuantityNoncondensablesOutTube}</Inner>
                             </ContentsWrapper>
                         </RowWarapper>
                     </ContentsWrapper>
@@ -649,24 +693,24 @@ export default function OutputFrame({ output, setIsInput}: OutputFrameProps) {
 
                 <RowWarapper style={{border: '1px solid #ccc'}}>
                     <RowWarapper style={{gap: 10}}>
-                        <ContentsWrapper style={{border: 'none'}}>
-                            <div style={{width: 400, textAlign: 'left'}}>
+                        <ContentsWrapper style={{border: 'none', justifyContent: 'space-between', paddingRight: 20}}>
+                            <div style={{textAlign: 'left'}}>
                             Transfer Rate, Service
                             </div>
                             {`${output.transferRateService} W/m2-K`}
                         </ContentsWrapper>
                     </RowWarapper>
                     <RowWarapper>
-                        <ContentsWrapper style={{border: 'none'}}>
-                            <div style={{width: 100, textAlign: 'left'}}>
+                        <ContentsWrapper style={{border: 'none', justifyContent: 'space-between', paddingRight: 20}}>
+                            <div style={{textAlign: 'left'}}>
                             Clean
                             </div>
                             {`${output.transferRateClean} W/m2-K`}
                         </ContentsWrapper>
                     </RowWarapper>
                     <RowWarapper>
-                        <ContentsWrapper style={{border: 'none'}}>
-                            <div style={{width: 100, textAlign: 'left'}}>
+                        <ContentsWrapper style={{border: 'none', justifyContent: 'space-between', paddingRight: 20}}>
+                            <div style={{textAlign: 'left'}}>
                             Actual
                             </div>
                             {`${output.transferRateActual} W/m2-K`}
@@ -786,7 +830,12 @@ export default function OutputFrame({ output, setIsInput}: OutputFrameProps) {
                 </div>
                 <div style={{width: '40%'}}>
                     <RowWarapper>
+                        <ColumnWrapper>
                         <ContentsWrapper style={{fontWeight: 'bold', fontSize: 24, justifyContent: 'center'}}>Sketch (Bundle/Nozzle Orientation)</ContentsWrapper>
+                        <div style={{display: 'flex', flex: 1, paddingTop: 50}}>
+                            <img src={'FigSketch.svg'} alt="Plot"  style={{ width: '100%', height: '100%', objectFit: 'contain' }}/>      
+                        </div>                  
+                        </ColumnWrapper>
                     </RowWarapper>
                 </div>
                 </RowWarapper>
@@ -822,12 +871,351 @@ export default function OutputFrame({ output, setIsInput}: OutputFrameProps) {
                         {`${output.pitch} mm`}
                     </ContentsWrapper>
                 </RowWarapper>
+                <ContentsWrapper style={{padding: 0}}>
+                    <RowWarapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 80, flexShrink: 0}}>
+                                Tube Type
+                            </div>
+                            <Inner>{output.tubeType}</Inner>
+                        </ContentsWrapper>
+                        
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            Material
+                            <Inner>{output.tubeMaterial}</Inner>
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            Tube pattern
+                            <Inner>{output.tubePattern}</Inner>
+                        </ContentsWrapper>
+                    </RowWarapper>
+                </ContentsWrapper>
+                <ContentsWrapper style={{padding: 0}}>
+                    <RowWarapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 80, flexShrink: 0}}>
+                                Shell
+                            </div>
+                            <Inner>{output.shellMaterial}</Inner>
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none', borderRight: '2px solid #ccc', padding: 0}}>
+                            <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                                ID
+                                <Inner>{output.shellID}</Inner>
+                                mm
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                                OD
+                                <Inner>{output.shellOD}</Inner>
+                                mm
+                            </ContentsWrapper>
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            Shell Cover
+                            <Inner>{output.shellCover}</Inner>
+                        </ContentsWrapper>
+                    </RowWarapper>
+                </ContentsWrapper>
+                <ContentsWrapper style={{padding: 0}}>
+                    <RowWarapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 145, flexShrink: 0}}>
+                                Channel or Bonnet
+                            </div>
+                            <Inner>{output.channelOrBonnet}</Inner>
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            Channel Cover
+                            <Inner>{output.channelCover}</Inner>
+                        </ContentsWrapper>
+                    </RowWarapper>
+                </ContentsWrapper>
+                <ContentsWrapper style={{padding: 0}}>
+                    <RowWarapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 155, flexShrink: 0}}>
+                                Tubesheet-Stationary
+                            </div>
+                            <Inner>{output.tubeSheetStationary}</Inner>
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            Tubesheet-Floating
+                            <Inner>{output.tubeSheetFloating}</Inner>
+                        </ContentsWrapper>
+                    </RowWarapper>
+                </ContentsWrapper>
+                <ContentsWrapper style={{padding: 0}}>
+                    <RowWarapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 150, flexShrink: 0}}>
+                                Floating Head Cover
+                            </div>
+                            <Inner>{output.floatingHeadCover}</Inner>
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            Impigement Plate
+                            <Inner>{output.impingementPlate}</Inner>
+                        </ContentsWrapper>
+                    </RowWarapper>
+                </ContentsWrapper>
+                <ContentsWrapper style={{padding: 0}}>
+                    <RowWarapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none', padding: 0}}>
+                            <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                                <div style={{width: 100, flexShrink: 0}}>
+                                    Baffles-Cross
+                                </div>
+                                <Inner>{output.bafflesCross}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                                <div style={{width: 50, flexShrink: 0}}>
+                                    Type
+                                </div>
+                                <Inner>{output.bafflesCrossType}</Inner>
+                            </ContentsWrapper>
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none', padding: 0}}>
+                            <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                                <div style={{width: 100, flexShrink: 0}}>
+                                    %Cut (Diam)
+                                </div>
+                                <Inner>{output.cutDiam}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                                <div style={{width: 100, flexShrink: 0}}>
+                                    Spacing (c/c)
+                                </div>
+                                <Inner>{output.spacing}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                                <div style={{width: 50, flexShrink: 0}}>
+                                    Inlet
+                                </div>
+                                <Inner>{output.bafflesCrossInlet}</Inner>
+                                mm
+                            </ContentsWrapper>
+                        </ContentsWrapper>
+                    </RowWarapper>
+                </ContentsWrapper>
+                <ContentsWrapper style={{padding: 0}}>
+                    <RowWarapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 100, flexShrink: 0}}>
+                                Baffles-Long
+                            </div>
+                            <Inner>{output.bafflesLong}</Inner>
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 100, flexShrink: 0}}>
+                                Seal Type
+                            </div>
+                            <Inner>{output.sealType}</Inner>
+                        </ContentsWrapper>
+                    </RowWarapper>
+                </ContentsWrapper>
+                <ContentsWrapper style={{padding: 0}}>
+                    <RowWarapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 115, flexShrink: 0}}>
+                                Supports-Tube
+                            </div>
+                            <Inner>{output.supportsTube}</Inner>
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none', padding: 0}}>
+                            <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                                <div style={{width: 70, flexShrink: 0}}>
+                                    U-Bend
+                                </div>
+                                <Inner>{output.UBend}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                                <div style={{width: 50, flexShrink: 0}}>
+                                    Type
+                                </div>
+                                <Inner>{output.UBendType}</Inner>
+                            </ContentsWrapper>
+                        </ContentsWrapper>
+                    </RowWarapper>
+                </ContentsWrapper>
+                <ContentsWrapper style={{padding: 0}}>
+                    <RowWarapper style={{alignItems: 'center'}}>
+                        <div style={{width: 250, textAlign: 'left', paddingLeft: 10}}>
+                            Distance, support to tubesheet
+                        </div>
+                        <ContentsWrapper style={{gap: 10, border: 'none', padding: 0, paddingRight: 5}}>
+                            <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                                <div style={{width: 70, flexShrink: 0}}>
+                                    Inlet
+                                </div>
+                                <Inner>{output.supportToTubesheetInlet}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                                <div style={{width: 50, flexShrink: 0}}>
+                                    Outlet
+                                </div>
+                                <Inner>{output.supportToTubesheetOutlet}</Inner>
+                            </ContentsWrapper>
+                            mm
+                        </ContentsWrapper>
+                    </RowWarapper>
+                </ContentsWrapper>
+                <ContentsWrapper style={{padding: 0}}>
+                    <RowWarapper style={{alignItems: 'center'}}>
+                        <div style={{width: 250, textAlign: 'left', paddingLeft: 10}}>
+                            Number of rows supported
+                        </div>
+                        <ContentsWrapper style={{gap: 10, border: 'none', padding: 0}}>
+                            <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                                <div style={{width: 70, flexShrink: 0}}>
+                                    Inlet
+                                </div>
+                                <Inner>{output.rowsSupportedInlet}</Inner>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                                <div style={{width: 50, flexShrink: 0}}>
+                                    Outlet
+                                </div>
+                                <Inner>{output.rowsSupportedOutlet}</Inner>
+                            </ContentsWrapper>
+                        </ContentsWrapper>
+                    </RowWarapper>
+                </ContentsWrapper>
+                <ContentsWrapper style={{padding: 0}}>
+                    <RowWarapper style={{alignItems: 'center'}}>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                                <div style={{width: 200, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                                    Bypass Seal Arrangement
+                                </div>
+                                <Inner>{output.bypassSealArrangement}</Inner>
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                                <div style={{width: 160, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                                    Tube-Tubesheet Joint
+                                </div>
+                                <Inner>{output.tubeTubesheetJoint}</Inner>
+                        </ContentsWrapper>
+                    </RowWarapper>
+                </ContentsWrapper>
+                <ContentsWrapper style={{padding: 0}}>
+                    <RowWarapper style={{alignItems: 'center'}}>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                                <div style={{width: 120, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                                    Expansion Joint
+                                </div>
+                                <Inner>{output.expansionJoint}</Inner>
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                                <div style={{width: 50, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                                    Type
+                                </div>
+                                <Inner>{output.expansionJointType}</Inner>
+                        </ContentsWrapper>
+                    </RowWarapper>
+                </ContentsWrapper>
+                <ContentsWrapper style={{padding: 0}}>
+                    <RowWarapper style={{alignItems: 'center'}}>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                                <div style={{width: 150, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                                    Rho-V2-Inlet Nozzle
+                                </div>
+                                <Inner>{output.RhoV2InletNozzle}</Inner>
+                                kg/m-s2
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none', padding: 0, paddingRight: 5}}>
+                            <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                                <div style={{width: 120, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                                    Bundle Entrance
+                                </div>
+                                <Inner>{output.bundleEnterance}</Inner>
+                            </ContentsWrapper>
+                                                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                                <div style={{width: 100, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                                    Bundle Exit
+                                </div>
+                                <Inner>{output.bundleExit}</Inner>
+                            </ContentsWrapper>
+                            kg/m-s2
+                        </ContentsWrapper>
+                    </RowWarapper>
+                </ContentsWrapper>
+                <ContentsWrapper style={{padding: 0}}>
+                    <RowWarapper style={{alignItems: 'center'}}>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 150, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                                Gaskets-Shell Side
+                            </div>
+                            <Inner>{output.gasketsShellSide}</Inner>
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 80, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                                Tube Side
+                            </div>
+                            <Inner>{output.gasketTubeSide}</Inner>
+                        </ContentsWrapper>
+                    </RowWarapper>
+                </ContentsWrapper>
+                <ContentsWrapper style={{padding: 0}}>
+                    <RowWarapper style={{alignItems: 'center'}}>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 150, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                                - Floating Head
+                            </div>
+                            <Inner>{output.floatingHead}</Inner>
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        </ContentsWrapper>
+                    </RowWarapper>
+                </ContentsWrapper>
+                <ContentsWrapper style={{padding: 0}}>
+                    <RowWarapper style={{alignItems: 'center'}}>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 150, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                                Code Requirements
+                            </div>
+                            <Inner>{output.codeRequirements}</Inner>
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 100, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                                TEMA Class
+                            </div>
+                            <Inner>{output.TEMAClass}</Inner>
+                        </ContentsWrapper>
+                    </RowWarapper>
+                </ContentsWrapper>
+                <ContentsWrapper style={{padding: 0}}>
+                    <RowWarapper style={{alignItems: 'center'}}>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 100, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                                Weight/Shell
+                            </div>
+                            <Inner>{output.weightShell}</Inner>
+                            kg
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 140, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                                Filled with Water
+                            </div>
+                            <Inner>{output.filledWithWater}</Inner>
+                            kg
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 50, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                                Bundle
+                            </div>
+                            <Inner>{output.bundle}</Inner>
+                            kg
+                        </ContentsWrapper>
+                    </RowWarapper>
+                </ContentsWrapper>
             </FrameWrapper>
             <ButtonWrapper>
                 <button onClick={handleExportPDF}>export to PDF</button>
                 <button onClick={handletoInput}>back to input page</button>
             </ButtonWrapper>
             <div style={{ width: '100%', display: 'block', textAlign: 'right'}}>© 2025 MyTech. All Rights Reserved.</div>
+            <div style={{ opacity: 0, pointerEvents: 'none', position: 'absolute', left: -9999 }}>
+                <SketchFrame ref={sketchRef} length={parseFloat(output.length)} diam={parseFloat(output.shellOD)} />
+            </div>
         </div>
     );
 }

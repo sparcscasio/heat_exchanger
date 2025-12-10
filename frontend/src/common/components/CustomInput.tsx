@@ -1,5 +1,5 @@
 import styled from "@emotion/styled";
-import { useState, type ChangeEvent, type FocusEvent } from "react";
+import { useState, type ChangeEvent } from "react";
 
 interface Props {
   value: string;
@@ -40,7 +40,7 @@ export default function CustomInput({
     onChange(v);
   };
 
-  const handleBlur = (e: FocusEvent<HTMLInputElement>) => {
+  const handleBlur = () => {
     if (errorfunction) {
       setError(errorfunction(value));
     }

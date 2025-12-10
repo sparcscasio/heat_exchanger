@@ -16,35 +16,13 @@ import os
 import webview
 import CoolProp.CoolProp as CP
 from openpyxl import load_workbook
-from openpyxl.drawing.image import Image
-
 # from numba import jit
 print("THIS IS THE REAL APP.PY")
 
-# 프로젝트 절대 경로 계산
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DIST_DIR = os.path.join(BASE_DIR, "frontend", "dist")
-
-app = Flask(__name__, static_folder=DIST_DIR, static_url_path="")
+app = Flask(__name__, static_folder="frontend/dist")
 CORS(app)
 
-# 개발 / 프로덕션 모드
 IS_DEV = os.environ.get("FLASK_ENV") == "development"
-
-@app.route("/", defaults={"path": ""})
-@app.route("/<path:path>")
-def serve(path):
-    # 개발중이면 vite dev 서버로 리다이렉트
-    if IS_DEV:
-        return redirect("http://localhost:5173")
-
-    # 파일이 실제 존재하면 정적 파일 서빙
-    file_path = os.path.join(DIST_DIR, path)
-    if path != "" and os.path.exists(file_path):
-        return send_from_directory(DIST_DIR, path)
-
-    # 그 외 모든 요청은 index.html (SPA)
-    return send_from_directory(DIST_DIR, "index.html")
 
 NONCONDENSABLES = [
     'Air', 'Nitrogen', 'Oxygen', 'Helium', 'Argon', 'Neon',
@@ -98,6 +76,21 @@ def get_phase(fluid, T, P):
         return "Steam"
     else:
         return "Vapor"
+
+
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve(path):
+    # ✔ 개발 환경: React Vite dev server로 redirect
+    if IS_DEV:
+        return redirect(f"http://localhost:5173/{path}")
+
+    # ✔ 프로덕션 환경: dist 빌드된 파일을 serve
+    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+
+    # ✔ SPA: 모든 URL은 index.html
+    return send_from_directory(app.static_folder, "index.html")
 
 @app.route("/api/test", methods=["POST"])
 def test():
@@ -153,21 +146,18 @@ def test():
 # 원본 코드 그대로    
 @app.route("/api/calc", methods=["POST"])
 def calc():
+    res = {}
     inputs = request.get_json()
-    res = inputs.get('init_data')
     Cold_Q = inputs.get('tube_fluid_quantity_total')
     La_Heat = inputs.get('La_Heat')
     tube_ea = inputs.get('tube_no')
     tube_L = inputs.get('tube_OD')
-    tube_L = tube_L / 1000
     Hot_Q = inputs.get('shell_fluid_quantity_total')
     d = inputs.get('tube_pitch')
-    d = d / 1000
     Hot_intemp1 = inputs.get('shell_temp_out_expected')
     Cold_Spec = inputs.get('tube_temp_out_expected')
     Temp_in = inputs.get('tube_temp_in')
     Tk = inputs.get('Thk')
-    Tk = Tk / 1000
     Fouling_F = inputs.get('fouling_resistance')
     A = inputs.get('title')
     L = inputs.get('no_passes_per_shell_tube')
@@ -251,7 +241,7 @@ def calc():
     Hot = Hot_Q/3600.
     Hot_V = Hot//0.029/943
     Hot_V = Hot//0.023/943
-    res['velocityShell'] = round(Hot_V, 2)
+    res['shell_velocity'] = Hot_V
     H_TC = 0.35*1.16   # w/m-k
     H_TC = 0.35   # kcal
 
@@ -271,10 +261,10 @@ def calc():
     C_VI = (7.81250000e-11* T1**4 +-3.07638889e-08*T1**3 + 4.81041667e-06*T1**2 +-3.81575397e-04*T1 + 1.59400000e-02)/10000
     C_PR =  7.91666667e-08* T1**4 +-2.98101852e-05*T1**3 + 4.39784722e-03*T1**2 +-3.22542791e-01*T1 + 1.19163333e+01
 
-    res['specificGravityInTube'] = round(water_VO / C_VO, 4)
-    res['viscosityInTube'] = round(C_VI * 1000 / C_VO, 4)
-    res['specificHeatInTube'] = round(C_CP * 4184, 4)
-    res['thermalConductivityInTube'] = round(C_TC * 4184, 4)
+    res['specific_gravity_in_tube'] = water_VO / C_VO
+    res['viscosity_in_tube '] = C_VI * 1000 / C_VO
+    res['specific_heat_in_tube'] = C_CP * 4184
+    res['thermal_conductivity_in_tube'] = C_TC * 4184
 
     # Glycol Water / 5 barG / 20~80
     H_VO=1/(-9.72222222225747E-10*T1**6 +2.95833333334354E-07*T1**5 +-0.000036180555555674*T1**4 +0.00226875000000702*T1**3 +-0.0788722222224456*T1**2 +0.985166666670283*T1 +1064.59999999998)    #VO 단위질량당부피 [m3/kg]
@@ -284,10 +274,10 @@ def calc():
     H_VI=(-9.44444444448553E-18*T1**6 +1.7166666666791E-15*T1**5 +4.72222222071443E-15*T1**4 +-2.45249999999067E-11*T1**3 +2.73962222221913E-09*T1**2 +-1.57384666666615E-07*T1 +5.15039999999966E-06)   #Kinetic Viscosity 동점성계수 [m2/s]
     H_PR=(-5.63150143643295E-11*T1**6 +6.98315976359687E-09*T1**5 +1.06381819268007E-06*T1**4 +-0.000287155332857528*T1**3 +0.0273229496066831*T1**2 +-1.48490105059018*T1 +46.6024012145047)   #Prantl number 
 
-    res['specificGravityInShell'] = round(water_VO / H_VO, 4)
-    res['viscosityInShell'] = round(H_VI / H_VO, 4)
-    res['specificHeatInShell'] = round(H_CP * 4184, 4)
-    res['thermalConductivityInShell'] = round(H_TC * 4184, 4)
+    res['specific_gravity_in_shell'] = water_VO / H_VO
+    res['viscosity_in_shell'] = H_VI / H_VO
+    res['specific_heat_in_shell'] = H_CP * 4184
+    res['thermal_conductivity_in_shell'] = H_TC * 4184
 
     C_CP1 = C_CP 
     C_PR1 = C_PR
@@ -309,7 +299,7 @@ def calc():
     Cold_V = Cold_Q * C_VO / 3600 / (tube_ea * pai * (d-Tu_t)**2/ 4)
     Volume_Rate1 = Cold_Q*C_VO
 
-    res['velocityTybe'] = round(Cold_V, 2)
+    res['tube_velocity'] = Cold_V
 
     Cold_intemp = Temp_in
     Outlet_Temp = Cold_intemp
@@ -380,14 +370,14 @@ def calc():
     SKT = 0
     DP_out = 0
 
-    res['specificGravityOutTube'] = ''
-    res['viscosityOutTube'] = ''
-    res['specificHeatOutTube'] = ''
-    res['thermalConductivityOutTube'] = ''
-    res['specificGravityOutShell'] = ''
-    res['viscosityOutShell'] = ''
-    res['specificHeatOutShell'] = ''
-    res['thermalConductivityOutShell'] = ''
+    res['specific_gravity_out_tube'] = ''
+    res['viscosity_out_tube'] = ''
+    res['specific_heat_out_tube'] = ''
+    res['thermal_conductivity_out_tube'] = ''
+    res['specific_gravity_out_shell'] = ''
+    res['viscosity_out_shell'] = ''
+    res['specific_heat_out_shell'] = ''
+    res['thermal_conductivity_out_shell'] = ''
 
 
     for k in range (0, 20, 1) :   # GW 출구 Temp  예상
@@ -428,10 +418,10 @@ def calc():
             C_PR =  7.91666667e-08* T1**4 +-2.98101852e-05*T1**3 + 4.39784722e-03*T1**2 +-3.22542791e-01*T1 + 1.19163333e+01
             C_cP = C_VI * 1000 / C_VO      # Centi-Poise
 
-            res['specificGravityOutTube'] = round(water_VO / C_VO, 4)
-            res['viscosityOutTube'] = round(C_cP, 4)
-            res['specificHeatOutTube'] = round(C_CP * 4184, 4)
-            res['thermalConductivityOutTube'] = round(C_TC * 4184, 4)
+            res['specific_gravity_out_tube'] = water_VO / C_VO
+            res['viscosity_out_tube'] = C_cP
+            res['specific_heat_out_tube'] = C_CP * 4184
+            res['thermal_conductivity_out_tube'] = C_TC * 4184
 
             T2 = Hot_intemp       
             x =  [H_1,     H_2,    H_3,    H_4,    H_5,    H_6,    H_7] 
@@ -475,10 +465,10 @@ def calc():
 
             H_cP = H_VI * 1000 / H_VO # Centi-Poise 
 
-            res['specificGravityOutShell'] = round(water_VO / H_VO, 4)
-            res['viscosityOutShell'] = round(H_cP, 4)
-            res['specificHeatOutShell'] = round(H_CP * 4184, 4)
-            res['thermalConductivityOutShell'] = round(H_TC * 4184, 4)
+            res['specific_gravity_out_shell'] = water_VO / H_VO
+            res['viscosity_out_shell'] = H_cP
+            res['specific_heat_out_shell'] = H_CP * 4184
+            res['thermal_conductivity_out_shell'] = H_TC * 4184
 
             #  print(T2)
             #  print ("C_CP    :",round(C_CP,3), "  C_PR :",round(C_PR,2), "   C_VI :",round(C_VI,8),"    c_TC :",round(C_TC,3), "    C_VO :", round(C_VO,5))
@@ -857,19 +847,19 @@ def calc():
     plt.close(fig)
     img_base64 = base64.b64encode(buf.read()).decode("utf-8")
 
-    res['temperatureOutShell'] = round(Hot_intemp1, 2)
-    res['temperatureOutTube'] = round(Cold_outtemp, 2)
-    res['MTD'] = round(LMTD, 2)
-    res['pressureDroCalcShell'] = round(DPT / 1000, 3)
-    res['pressureDroCalcTube'] = round(DpgT/1000, 3)
-    res['transferRateService'] = round(service, 2)
-    res['transferRateClean'] = round(clean, 2)
-    res['transferRateActual'] = round(actual, 2)
-    res['surfUnitGross'] = round(T_surface, 2)
-    res['surfUnitEff'] = round(surf_eff, 2)
-    res['heatExchanged'] = round(ToL_Q/859.8, 1)
-    res['surfShellGross'] = round(T_surface * Shell_per_unit, 2)
-    res['surfShellEff'] = round(surf_eff * Shell_per_unit, 2)
+    res['shell_side_out_temp'] = Hot_intemp1
+    res['Tube Side Out Temp'] = Cold_outtemp
+    res['mtd_corrected'] = LMTD
+    res['shell_pressure_drop'] = DPT / 1000
+    res['tube_pressure_drop'] = DpgT/1000
+    res['transfer_rate_service'] = service
+    res['transfer_rate_clean'] = clean
+    res['transfer_rate_actual'] = actual
+    res['surf_unit_gross'] = T_surface
+    res['surf_unit_eff'] = surf_eff
+    res['heat_exchanged'] = ToL_Q/859.8
+    res['surf_shell_gross'] = T_surface * Shell_per_unit
+    res['surf_shell_eff'] = surf_eff * Shell_per_unit
     # res['Tube No'] = tube_ea
     # res['Length'] = tube_L
     # res['OD'] = d
@@ -924,6 +914,365 @@ def calc():
     # res['D35'] = TT2
     return jsonify({"resData" : res, "imgData" : img_base64})
 
+# 다듬은 코드 - 결과값이 잘 안나와서 확인 필요
+@app.route("/api/simulate", methods=["POST"])
+def simulate():
+   inputs = request.get_json()
+   print("input type:", type(inputs))
+   print("inputs:", inputs)
+   res = {}
+   
+   hot_fluid_string = inputs.get('hot_fluid_string')
+   cold_fluid_string = inputs.get('cold_fluid_string')
+   # 입력값을 변수에 할당한다.
+   cold_fluid_quantity = inputs.get('cold_fluid_quanitity') # LNG 유량 cold
+   hot_fluid_quantity = inputs.get('hot_fluid_quantity') # GW 유량 ho
+   tube_no = inputs.get('tube_no') # 튜브 개수
+   tube_length = inputs.get('tube_length')
+
+   # WARNING: 입력이 아니라 값으로. 어떤 값이 d인지 모르겠음
+   d = .004   # 판 간격 .004 m 4mm
+   M = 2
+   L = 2
+
+   hot_in_temp = inputs.get('hot_in_temp')
+   cold_out_temp_input = inputs.get('cold_out_temp_input') # LNG 출구 spec.COLD
+   cold_in_temp = inputs.get('cold_in_temp')
+   avgerage_thickness = inputs.get('averageThickness') # 튜브 두께
+   fouling_factor = inputs.get('foulingFactor')
+   pitch = inputs.get('pitch') # plate pitch
+   # M = inputs.get('M')
+   # Hot_T = inputs.get('Hot_T')
+   hot_out_temp_input = inputs.get('hot_out_temp_input')
+   inlet_pressure_cold = inputs.get('inletPressureCold')
+   inlet_pressure_hot = inputs.get('inletPressureHot')
+   pressure_drop_allow_cold = inputs.get('pressureDropAllowCold')
+   pressure_drop_allow_hot = inputs.get('pressureDropAllowHot')
+
+   baffle_spacing = inputs.get('baffle_spacing')
+   baffle_cut = inputs.get('baffle_cut')
+   shell_inner_diameter = inputs.get('shell_inner_diameter')
+   no_passes_per_shell_shell_side = inputs.get('no_passes_per_shell_shell_side')
+
+   # barG => Pa로 변환
+   inlet_pressure_cold = (inlet_pressure_cold + 1.01325) * 100000
+   inlet_pressure_hot = (inlet_pressure_hot + 1.01325) * 100000
+   
+   # bar => Pa로 변횐
+   pressure_drop_allow_cold = pressure_drop_allow_cold * 100000
+   pressure_drop_allow_hot = pressure_drop_allow_hot * 100000
+
+   # shell 관련 변수 mm => m로 단위 변환
+   baffle_spacing = baffle_spacing / 1000
+   shell_inner_diameter = shell_inner_diameter / 1000
+
+   # 잠열 계산
+   # WARNING : inlet pressure 기준으로 계산
+   inlet_latent_heat_cold = CP.PropsSI("H", "P", inlet_pressure_cold, "Q", 1, cold_fluid_string) - CP.PropsSI("H", "P", inlet_pressure_cold, "Q", 0, cold_fluid_string)
+   # inlet_latent_heat_hot =  CP.PropsSI("H", "P", inlet_pressure_hot, "Q", 1, hot_fluid_string) - CP.PropsSI("H", "P", inlet_pressure_hot, "Q", 0, hot_fluid_string)
+
+   # 계산
+   Req = cold_fluid_quantity * inlet_latent_heat_cold
+   Q = Req
+   Tu_t = avgerage_thickness * 2   #튜브 두께 
+
+   DET = .0002  # 수렴
+
+   cold_in_temp_kelvin = cold_in_temp + 273.15
+   C_rho = CP.PropsSI('D', 'T', cold_in_temp_kelvin, 'P', inlet_pressure_cold, cold_fluid_string)
+   C_VO = 1 / C_rho
+   C_CP = CP.PropsSI('CPMASS', 'T', cold_in_temp_kelvin, 'P', inlet_pressure_cold, cold_fluid_string)
+   C_TC = CP.PropsSI('L', 'T', cold_in_temp_kelvin, 'P', inlet_pressure_cold, cold_fluid_string)
+   C_PR = CP.PropsSI('PRANDTL', 'T', cold_in_temp_kelvin, 'P', inlet_pressure_cold, cold_fluid_string)     
+   C_VI = CP.PropsSI('V', 'T', cold_in_temp_kelvin, 'P', inlet_pressure_cold, cold_fluid_string)
+
+   # Glycol Water / 5 barG / 20~80
+   hot_in_temp_kelvin = hot_in_temp + 273.15
+   H_rho = CP.PropsSI('D', 'T', hot_in_temp_kelvin, 'P', inlet_pressure_hot, hot_fluid_string)
+   H_VO = 1 / H_rho
+   H_CP = CP.PropsSI('CPMASS', 'T', hot_in_temp_kelvin, 'P', inlet_pressure_hot, hot_fluid_string)
+   H_TC = CP.PropsSI('L', 'T', hot_in_temp_kelvin, 'P', inlet_pressure_hot, hot_fluid_string)
+   H_PR = CP.PropsSI('PRANDTL', 'T', hot_in_temp_kelvin, 'P', inlet_pressure_hot, hot_fluid_string)      
+   H_VI = CP.PropsSI('V', 'T', hot_in_temp_kelvin, 'P', inlet_pressure_hot, hot_fluid_string)
+
+   Hd = pitch
+
+   cold_velocity = cold_fluid_quantity * C_VO / 3600 / (tube_no * np.pi * (d - Tu_t)**2/ 4)
+   cold_Re = cold_velocity * d / C_VI
+   Nu = 0.023 * cold_Re**.8 * C_PR**0.4
+   Cold_h = Nu * C_TC / d   
+
+   hot_velocity = hot_fluid_quantity * H_VO / 3600 / no_passes_per_shell_shell_side / (baffle_cut * shell_inner_diameter * baffle_spacing)
+   hot_Re = hot_velocity * d / 0.0000016
+   Hot_Nu = 0.664 * hot_Re**.5 * H_PR**.3333
+   Hot_h = Hot_Nu * H_TC / pitch 
+
+   Total_convec = 1 / (1 / Hot_h + 1 / Cold_h + fouling_factor) # 열전달 계수
+
+   surface_a = Q / (Total_convec*(hot_in_temp-cold_in_temp)) # 필요 열교환 면적
+
+   hot_out_temp_local =  hot_in_temp - Q/(hot_fluid_quantity*H_CP) 
+
+   res['Shell Side Velocity'] = hot_velocity
+   res['Tube Side Velocity'] = cold_velocity
+
+   # res['Boiling surface Area m^2'] = round(surface_a,2)
+   # res['Heat Capa.(Kcal/h)'] = round(Q/1000,2)
+   # res['Cold Inlet Temp'] = cold_in_temp
+   # res['Cold Outlet Temp'] = cold_in_temp
+   # res['GW Inlet Temp'] = hot_in_temp
+   # res['GW Outlet Temp'] = round(hot_out_temp_local,2)
+
+   total_surface = 0
+   TOQ = Q
+   hot_in_temp_local = hot_out_temp_local
+
+   drop_pressure_hot = 0
+   drop_pressure_cold = 0
+
+   Hd = pitch
+
+   # prevent unassociated error
+   ToL_Spec = 0
+   surface_result = 1
+
+   for k in range (20) :   # GW 출구 Temp  예상
+      hot_in_temp_local =  hot_in_temp
+      cold_in_temp_local = cold_in_temp
+      total_surface = 0 # 누적 표면적 합
+      Total_convec = 650 # 전체 열전달 계수
+      drop_pressure_hot = 0
+      drop_pressure_cold = 0
+      TOQ = 0
+      TOC = 0
+      TCP = 0
+
+      # surface_a = 2*tube_ea* math.sin(math.radians(ii))*tube_L/2 * (math.cos(math.radians(ii))*tube_L/2- math.cos(math.radians(ii+1/2))*tube_L/2)   # 이게 무슨 코드야,,,
+      # WARNING!! : 여기 수정 필요
+      surface_a = tube_length * tube_no *  (avgerage_thickness / 2)
+      total_surface =  total_surface + surface_a
+
+      # drop pressure allow를 고려해서
+      local_pressure_cold = max(inlet_pressure_cold - drop_pressure_cold, inlet_pressure_cold - pressure_drop_allow_cold)
+      local_pressure_hot = max(inlet_pressure_hot - drop_pressure_hot, inlet_pressure_hot - pressure_drop_allow_hot)  
+
+      # 국소 부위에서의 cold 물성치 계산
+      cold_in_temp_local_kelvin = cold_in_temp_local + 273.15
+      C_rho = CP.PropsSI('D', 'T', cold_in_temp_local_kelvin, 'P', local_pressure_cold, cold_fluid_string)
+      C_VO = 1 / C_rho
+      C_CP = CP.PropsSI('CPMASS', 'T', cold_in_temp_local_kelvin, 'P', local_pressure_cold, cold_fluid_string)
+      C_TC = CP.PropsSI('L', 'T', cold_in_temp_local_kelvin, 'P', local_pressure_cold, cold_fluid_string)
+      C_PR = CP.PropsSI('PRANDTL', 'T', cold_in_temp_local_kelvin, 'P', local_pressure_cold, cold_fluid_string)     
+      C_VI = CP.PropsSI('V', 'T', cold_in_temp_local_kelvin, 'P', local_pressure_cold, cold_fluid_string)
+
+      # 국소 부위에서의 hot 물성치 계산
+      hot_in_temp_local_kelvin = hot_in_temp_local + 273.15
+      H_rho = CP.PropsSI('D', 'T', hot_in_temp_local_kelvin, 'P', local_pressure_hot, hot_fluid_string)
+      H_VO = 1 / H_rho
+      H_CP = CP.PropsSI('CPMASS', 'T', hot_in_temp_local_kelvin, 'P', local_pressure_hot, hot_fluid_string)
+      H_TC = CP.PropsSI('L', 'T', hot_in_temp_local_kelvin, 'P', local_pressure_hot, hot_fluid_string)
+      H_PR = CP.PropsSI('PRANDTL', 'T', hot_in_temp_local_kelvin, 'P', local_pressure_hot, hot_fluid_string)      
+      H_VI = CP.PropsSI('V', 'T', hot_in_temp_local_kelvin, 'P', local_pressure_hot, hot_fluid_string)
+
+      fluid_quantity_cold_per_sec = cold_fluid_quantity / 3600
+      Hd = pitch
+      Area = tube_no / 2 / L * Hd * math.sin(math.radians(1)) * tube_length 
+
+      # cold 흐름
+      cold_velocity = fluid_quantity_cold_per_sec / (Area * 1/C_VO)
+      cold_Re = cold_velocity * Hd / C_VI  # 레이놀즈 수
+
+      Nu = 0.023 * math.pow(cold_Re,.8) * math.pow(C_PR,0.333)
+      if cold_Re <  50000  :                                       
+         Nu = 0.664 * math.pow(cold_Re,.5) * math.pow(C_PR,0.333)  
+      
+      Cold_h = Nu * C_TC / Hd        
+
+      # hot 흐름
+      fluid_quantity_hot_per_sec = hot_fluid_quantity  / 3600                                                      # 메탄
+      Area = tube_no / 2 / M * Hd * tube_length       # GW 유로면적
+
+      hot_velocity = fluid_quantity_hot_per_sec / (Area * 1/H_VO)  
+      hot_Re = hot_velocity * Hd / H_VI 
+
+      Hot_Nu = 0.023 * math.pow(hot_Re,.79) * math.pow(H_PR,.33)
+      if  hot_Re <  50000 : 
+         Hot_Nu = 0.664 * math.pow(hot_Re,.5) * math.pow(H_PR,.33)
+      Hot_h = Hot_Nu * H_TC / Hd 
+
+      Total_convec = 1 / (1 / Cold_h + 1 / Hot_h + fouling_factor + avgerage_thickness / 14.4)        # 평행 평판 
+
+      for j in range(10) :
+         print(j)
+         delta_temp_local = hot_in_temp_local - cold_in_temp_local
+         print(Total_convec, surface_a, delta_temp_local)
+         TQ = (Total_convec) * surface_a * delta_temp_local # 국소 열전달량
+         print('========', k, j, TQ, '========')
+
+         hot_out_temp_local =  hot_in_temp_local - TQ / (hot_fluid_quantity * H_CP)   # Counter Flow
+         cold_out_temp_local = cold_in_temp_local + TQ / (cold_fluid_quantity * C_CP) 
+         print('========', hot_out_temp_local, cold_out_temp_local, '========')
+         
+         hdt = hot_in_temp_local - cold_out_temp_local           
+         cdt = hot_out_temp_local - cold_in_temp_local 
+
+         # counter flow에서 LMTD
+         LMTD = (hdt-cdt)/math.log(hdt/cdt)     
+         TTQ = Total_convec * surface_a * LMTD
+         DT = math.pow((TTQ - TQ), 2) /1000
+         print('DT', DT)
+
+         #if DT <= DET :
+         if True:
+            TOQ = TOQ + TQ
+            ToL_Q = TOQ
+            ToL_W1 = ToL_Q  
+            # warning: 여기 N은 임의로 결정함. 
+            drop_pressure_cold_local = (64 / cold_Re * (tube_length + 100 * Hd) / 100) * (1 / C_VO) * (cold_velocity * L) ** 2 / (2 * Hd) # 국소 압력 강하, Cold
+            drop_pressure_hot_local = (64 / hot_Re * (tube_length + 100 * Hd) / 100) * (1 / H_VO) * (hot_velocity * L) ** 2 / (2 * Hd) # 국소 압력 강하, Hot
+            drop_pressure_hot = drop_pressure_hot + drop_pressure_hot_local # 누적 압력 강하, Hot
+            drop_pressure_cold = drop_pressure_cold + drop_pressure_cold_local # 누적 압력 강하, Cold
+            TOC = TOC + Total_convec
+            TCP = TCP + C_CP   
+
+            cold_in_temp_local = cold_out_temp_local
+            hot_in_temp_local = hot_out_temp_local                  
+
+            if math.pow ((hot_out_temp_input - hot_out_temp_local),2) < .0005 :
+               surface_result = total_surface 
+
+            if math.pow((cold_out_temp_input - cold_in_temp),2) < .0001 :
+               surface_result = total_surface
+               ToL_W1 = ToL_Q / 859.8
+               ToL_Spec = ToL_W1  
+               break  
+      if (hot_out_temp_local > hot_in_temp ) : break
+
+   surface_pe = round(surface_result*100/total_surface, 1)
+   cold_outlet_temp = cold_out_temp_local
+   hot_outlet_temp = hot_out_temp_local
+   cold_outlet_pressure = inlet_pressure_cold - drop_pressure_cold
+   hot_outlet_pressure = inlet_pressure_hot - drop_pressure_hot
+
+   ## ==== 여기는 결과 출력 ==== ##
+   ToTal_K = TOC  # Average Heat Transfer Coef.
+   ToL_Q = TOQ
+   ToL_W = ToL_Q*1.163
+   ToTal_K_W = ToTal_K * 1.163 
+
+   margine = (100 - surface_pe) / surface_pe * 100
+   mardumi = 1/(1 + margine / 100)
+   service = ToTal_K_W * mardumi
+   LMTD = ToL_W / service / (total_surface * .99)
+
+   # 열교환기 성능 관련 결과값들
+   res['Heat Exchanged'] = round(ToL_Spec, 2)
+   res['MTD (Corrected)'] = round(LMTD, 1)
+   res['Transfer Rate, Service'] = round(service, 2)
+   res['Transfer Rate, Clean'] = round(ToTal_K_W, 2)
+   res['Transfer Rate, Actual'] = round(service * 0.99, 2)
+
+   # 물성치 계산
+   res['Tube Temperature (Out)'] = round(cold_outlet_temp, 2)
+   res['Shell Temperature (Out)'] = round(hot_outlet_temp, 2)
+
+   res['Cold Out Vapor'] = ''
+   res['Cold Out Liquid'] = ''
+   res['Cold Out Steam'] = ''
+   res['Cold Out Water'] = ''
+   res['Cold Out Noncondensables'] = ''
+   res['Hot Out Vapor'] = ''
+   res['Hot Out Liquid'] = ''
+   res['Hot Out Steam'] = ''
+   res['Hot Out Water'] = ''
+   res['Hot Out Noncondensables'] = ''
+
+   cold_out_phase = get_phase(cold_fluid_string, cold_outlet_temp, cold_outlet_pressure)
+   hot_out_phase = get_phase(hot_fluid_string, hot_outlet_temp, hot_outlet_pressure)
+
+   if cold_out_phase == 'Vapor':
+      res['Cold Out Vapor'] = cold_fluid_quantity
+   elif cold_out_phase == 'Liquid':
+      res['Cold Out Liquid'] = cold_fluid_quantity
+   elif cold_out_phase == 'Steam':
+      res['Cold Out Steam'] = cold_fluid_quantity
+   elif cold_out_phase == 'Water':
+      res['Cold Out Water'] = cold_fluid_quantity
+   else:
+      res['Cold Out Noncondensables'] = cold_fluid_quantity
+
+   if hot_out_phase == 'Vapor':
+    res['Hot Out Vapor'] = hot_fluid_quantity
+   elif hot_out_phase == 'Liquid':
+      res['Hot Out Liquid'] = hot_fluid_quantity
+   elif hot_out_phase == 'Steam':
+      res['Hot Out Steam'] = hot_fluid_quantity
+   elif hot_out_phase == 'Water':
+      res['Hot Out Water'] = hot_fluid_quantity
+   else:
+      res['Hot Out Noncondensables'] = hot_fluid_quantity
+
+   # Specific gravity
+   rho_water_4C = CP.PropsSI("D", "T", 273.15 + 4, "P", 101325, "Water")
+   rho_cold_in = CP.PropsSI("D", "T", cold_in_temp + 273.15, "P", inlet_pressure_cold, cold_fluid_string)
+   rho_cold_out = CP.PropsSI("D", "T", cold_outlet_temp + 273.15, "P", cold_outlet_pressure, cold_fluid_string)
+   rho_hot_in = CP.PropsSI("D", "T", hot_in_temp + 273.15, "P", inlet_pressure_hot, hot_fluid_string)
+   rho_hot_out = CP.PropsSI("D", "T", hot_outlet_temp + 273.15, "P", hot_outlet_pressure, hot_fluid_string)
+
+   res['Tube Specific Gravity In'] = round(rho_cold_in / rho_water_4C, 1)
+   res['Tube Specific Gravity Out'] = round(rho_cold_out / rho_water_4C, 1)
+   res['Shell Specific Gravity In'] = round(rho_hot_in / rho_water_4C, 1)
+   res['Shell Specific Gravity Out'] = round(rho_hot_out / rho_water_4C, 1)
+
+   # Viscosity
+   viscosity_cold_in = CP.PropsSI("V", "T", cold_in_temp + 273.15, "P", inlet_pressure_cold, cold_fluid_string)
+   viscosity_cold_out = CP.PropsSI("V", "T", cold_outlet_temp + 273.15, "P", cold_outlet_pressure, cold_fluid_string)
+   viscosity_hot_in = CP.PropsSI("V", "T", hot_in_temp + 273.15, "P", inlet_pressure_hot, hot_fluid_string)
+   viscosity_hot_out = CP.PropsSI("V", "T", hot_outlet_temp + 273.15, "P", hot_outlet_pressure, hot_fluid_string)
+
+   res['Tube Viscosity In'] = round(viscosity_cold_in, 4)
+   res['Tube Viscosity Out'] = round(viscosity_cold_out, 4)
+   res['Shell Viscosity In'] = round(viscosity_hot_in, 4)
+   res['Shell Viscosity Out'] = round(viscosity_hot_out, 4)
+
+   # Specific Heat
+   specific_heat_cold_in = CP.PropsSI("CPMASS", "T", cold_in_temp + 273.15, "P", inlet_pressure_cold, cold_fluid_string)
+   specific_heat_cold_out = CP.PropsSI("CPMASS", "T", cold_outlet_temp + 273.15, "P", cold_outlet_pressure, cold_fluid_string)
+   specific_heat_hot_in = CP.PropsSI("CPMASS", "T", hot_in_temp + 273.15, "P", inlet_pressure_hot, hot_fluid_string)
+   specific_heat_hot_out = CP.PropsSI("CPMASS", "T", hot_outlet_temp + 273.15, "P", hot_outlet_pressure, hot_fluid_string)
+
+   res['Tube Specific Heat In'] = round(specific_heat_cold_in, 1)
+   res['Tube Specific Heat Out'] = round(specific_heat_cold_out, 1)
+   res['Shell Specific Heat In'] = round(specific_heat_hot_in, 1)
+   res['Shell Specific Heat Out'] = round(specific_heat_hot_out, 1)
+
+   # Thermal Conductivity
+   thermal_conductivity_cold_in = CP.PropsSI("L", "T", cold_in_temp + 273.15, "P", inlet_pressure_cold, cold_fluid_string)
+   thermal_conductivity_cold_out = CP.PropsSI("L", "T", cold_outlet_temp + 273.15, "P", cold_outlet_pressure, cold_fluid_string)
+   thermal_conductivity_hot_in = CP.PropsSI("L", "T", hot_in_temp + 273.15, "P", inlet_pressure_hot, hot_fluid_string)
+   thermal_conductivity_hot_out = CP.PropsSI("L", "T", hot_outlet_temp + 273.15, "P", hot_outlet_pressure, hot_fluid_string)
+
+   res['Tube Thermal Conductivity In'] = round(thermal_conductivity_cold_in, 4)
+   res['Tube Thermal Conductivity Out'] = round(thermal_conductivity_cold_out, 4)
+   res['Shell Thermal Conductivity In'] = round(thermal_conductivity_hot_in, 4)
+   res['Shell Thermal Conductivity Out'] = round(thermal_conductivity_hot_out, 4)
+
+   #outlet_latent_heat_cold = CP.PropsSI("H", "P", cold_outlet_pressure, "Q", 1, cold_fluid_string) - CP.PropsSI("H", "P", cold_outlet_pressure, "Q", 0, cold_fluid_string)
+   #outlet_latent_heat_hot =  CP.PropsSI("H", "P", hot_outlet_pressure, "Q", 1, hot_fluid_string) - CP.PropsSI("H", "P", hot_outlet_pressure, "Q", 0, hot_fluid_string)
+
+   res['Tube Latent Heat In'] = round(inlet_latent_heat_cold, 4)
+   #res['Tube Latent Heat Out'] = round(outlet_latent_heat_cold, 4)
+   # res['Shell Latent Heat In'] = round(inlet_latent_heat_hot, 4)
+   #res['Shell Latent Heat Out'] = round(outlet_latent_heat_hot, 4)
+
+   res['Tube Pressure Drop Calc'] = round(drop_pressure_cold / 1000, 3)
+   res['Shell Pressure Drop Calc'] = round(drop_pressure_hot / 1000, 3)
+   res['Shell Velocity'] = round(hot_velocity, 2)
+   res['Tube Velocity'] = round(cold_velocity, 2)
+
+   print(res)
+   return jsonify({"printData" : res})
+
 @app.route("/api/plot")
 def plot():
     # 예시 그래프 데이터
@@ -950,199 +1299,37 @@ def plot():
 @app.route("/api/excel", methods=["POST"])
 def excel():
     inputs = request.get_json()
-    heat_exchanged = inputs.get("heatExchanged")
-    mtd_corrected = inputs.get("MTD")
-    shell_pressure_drop = inputs.get("pressureDroCalcShell")
-    shell_side_out_temp = inputs.get("temperatureOutShell")
-    shell_velocity = inputs.get("velocityShell")
-
-    specific_gravity_in_shell = inputs.get("specificGravityInShell")
-    specific_gravity_in_tube = inputs.get("specificGravityInTube")
-    specific_gravity_out_shell = inputs.get("specificGravityOutShell")
-    specific_gravity_out_tube = inputs.get("specificGravityOutTube")
-
-    specific_heat_in_shell = inputs.get("specificHeatInShell")
-    specific_heat_in_tube = inputs.get("specificHeatInTube")
-    specific_heat_out_shell = inputs.get("specificHeatOutShell")
-    specific_heat_out_tube = inputs.get("specificHeatOutTube")
-
-    surf_shell_gross = inputs.get("surfShellGross")
-    surf_shell_eff = inputs.get("surfShellEff")
-    surf_unit_eff = inputs.get("surfUnitEff")
-    surf_unit_gross = inputs.get("surfUnitGross")
-
-    thermal_conductivity_in_shell = inputs.get("thermalConductivityInShell")
-    thermal_conductivity_in_tube = inputs.get("thermalConductivityInTube")
-    thermal_conductivity_out_shell = inputs.get("thermalConductivityOutShell")
-    thermal_conductivity_out_tube = inputs.get("thermalConductivityOutTube")
-
-    transfer_rate_actual = inputs.get("transferRateActual")
-    transfer_rate_clean = inputs.get("transferRateClean")
-    transfer_rate_service = inputs.get("transferRateService")
-
-    tube_pressure_drop = inputs.get("pressureDroCalcTube")
-    tube_side_out_temp = inputs.get("temperatureOutTube")
-    tube_velocity = inputs.get("velocityTybe")
-
-    viscosity_in_shell = inputs.get("viscosityInShell")
-    viscosity_in_tube = inputs.get("viscosityInTube")
-    viscosity_out_shell = inputs.get("viscosityOutShell")
-    viscosity_out_tube = inputs.get("viscosityOutTube")
-
-    OD = inputs.get("OD")
-    address = inputs.get("address")
-    Thk = inputs.get("Thk")
-    connectParallel = inputs.get("connectParallel")
-    connectSeries = inputs.get("connectSeries")
-
-    connectionSizeShellIn1 = inputs.get("connectionSizeShellIn1")
-    connectionSizeShellIn2 = inputs.get("connectionSizeShellIn2")
-    connectionSizeShellIntermediate1 = inputs.get("connectionSizeShellIntermediate1")
-    connectionSizeShellIntermediate2 = inputs.get("connectionSizeShellIntermediate2")
-    connectionSizeShellOut1 = inputs.get("connectionSizeShellOut1")
-    connectionSizeShellOut2 = inputs.get("connectionSizeShellOut2")
-
-    connectionSizeTubeIn1 = inputs.get("connectionSizeTubeIn1")
-    connectionSizeTubeIn2 = inputs.get("connectionSizeTubeIn2")
-    connectionSizeTubeIntermediate1 = inputs.get("connectionSizeTubeIntermediate1")
-    connectionSizeTubeIntermediate2 = inputs.get("connectionSizeTubeIntermediate2")
-    connectionSizeTubeOut1 = inputs.get("connectionSizeTubeOut1")
-    connectionSizeTubeOut2 = inputs.get("connectionSizeTubeOut2")
-
-    corrosionAllowanceShell = inputs.get("corrosionAllowanceShell")
-    corrosionAllowanceTube = inputs.get("corrosionAllowanceTube")
-
-    customer = inputs.get("customer")
-    date_input = inputs.get("date")
-
-    designPressureShell = inputs.get("designPressureShell")
-    designPressureTube = inputs.get("designPressureTube")
-    designTemperatureShell = inputs.get("designTemperatureShell")
-    designTemperatureTube = inputs.get("designTemperatureTube")
-
-    fluidNameShell = inputs.get("fluidNameShell")
-    fluidNameTube = inputs.get("fluidNameTube")
-
-    fluidQuantityLiquidInShell = inputs.get("fluidQuantityLiquidInShell")
-    fluidQuantityLiquidInTube = inputs.get("fluidQuantityLiquidInTube")
-    fluidQuantityLiquidOutShell = inputs.get("fluidQuantityLiquidOutShell")
-    fluidQuantityLiquidOutTube = inputs.get("fluidQuantityLiquidOutTube")
-
-    fluidQuantityNoncondensablesInShell = inputs.get("fluidQuantityNoncondensablesInShell")
-    fluidQuantityNoncondensablesInTube = inputs.get("fluidQuantityNoncondensablesInTube")
-    fluidQuantityNoncondensablesOutShell = inputs.get("fluidQuantityNoncondensablesOutShell")
-    fluidQuantityNoncondensablesOutTube = inputs.get("fluidQuantityNoncondensablesOutTube")
-
-    fluidQuantitySteamInShell = inputs.get("fluidQuantitySteamInShell")
-    fluidQuantitySteamInTube = inputs.get("fluidQuantitySteamInTube")
-    fluidQuantitySteamOutShell = inputs.get("fluidQuantitySteamOutShell")
-    fluidQuantitySteamOutTube = inputs.get("fluidQuantitySteamOutTube")
-
-    fluidQuantityTotalShell = inputs.get("fluidQuantityTotalShell")
-    fluidQuantityTotalTube = inputs.get("fluidQuantityTotalTube")
-
-    fluidQuantityVaporInShell = inputs.get("fluidQuantityVaporInShell")
-    fluidQuantityVaporInTube = inputs.get("fluidQuantityVaporInTube")
-    fluidQuantityVaporOutShell = inputs.get("fluidQuantityVaporOutShell")
-    fluidQuantityVaporOutTube = inputs.get("fluidQuantityVaporOutTube")
-
-    fluidQuantityWaterInShell = inputs.get("fluidQuantityWaterInShell")
-    fluidQuantityWaterInTube = inputs.get("fluidQuantityWaterInTube")
-    fluidQuantityWaterOutShell = inputs.get("fluidQuantityWaterOutShell")
-    fluidQuantityWaterOutTube = inputs.get("fluidQuantityWaterOutTube")
-    foulingResistanceShell = inputs.get("foulingResistanceShell")
-    inletPressureShell = inputs.get("inletPressureShell")
-    inletPressureTube = inputs.get("inletPressureTube")
-
-    itemNo = inputs.get("itemNo")
-    jobNo = inputs.get("jobNo")
-
-    latentHeatInShell = inputs.get("latentHeatInShell")
-    latentHeatInTube = inputs.get("latentHeatInTube")
-    latentHeatOutShell = inputs.get("latentHeatOutShell")
-    latentHeatOutTube = inputs.get("latentHeatOutTube")
-    length = inputs.get("length")
-    molecularWeightInShell = inputs.get("molecularWeightInShell")
-    molecularWeightInTube = inputs.get("molecularWeightInTube")
-    molecularWeightNoncondensableInShell = inputs.get("molecularWeightNoncondensableInShell")
-    molecularWeightNoncondensableInTube = inputs.get("molecularWeightNoncondensableInTube")
-    molecularWeightNoncondensableOutShell = inputs.get("molecularWeightNoncondensableOutShell")
-    molecularWeightNoncondensableOutTube = inputs.get("molecularWeightNoncondensableOutTube")
-    molecularWeightOutShell = inputs.get("molecularWeightOutShell")
-    molecularWeightOutTube = inputs.get("molecularWeightOutTube")
-
-    numberPassesShell = inputs.get("numberPassesShell")
-    numberPassesTube = inputs.get("numberPassesTube")
-
-    orientation = inputs.get("orientation")
-    pitch = inputs.get("pitch")
-    plantLocation = inputs.get("plantLocation")
-
-    pressureDropAllowShell = inputs.get("pressureDropAllowShell")
-    pressureDropAllowTube = inputs.get("pressureDropAllowTube")
-
-    proposalNo = inputs.get("proposalNo")
-    referenceNo = inputs.get("referenceNo")
-    rev = inputs.get("rev")
-
-    serviceOfUnit = inputs.get("serviceOfUnit")
-    shellUnit = inputs.get("shellUnit")
-
-    sizeHorizontal = inputs.get("sizeHorizontal")
-    sizeVertical = inputs.get("sizeVertical")
-
-    temperatureInShell = inputs.get("temperatureInShell")
-    temperatureInTube = inputs.get("temperatureInTube")
-
-    testPressureShell = inputs.get("testPressureShell")
-    testPressureTube = inputs.get("testPressureTube")
-    tubeNo = inputs.get("tubeNo")
-    type_text = inputs.get("type")
-
-    tubeType = inputs.get("tubeType")
-    tubeMaterial = inputs.get("tubeMaterial")
-    tubePattern = inputs.get("tubePattern")
-    shellMaterial = inputs.get("shellMaterial")
-    shellID = inputs.get("shellID")
-    shellOD = inputs.get("shellOD")
-    shellCover = inputs.get("shellCover")
-    channelOrBonnet = inputs.get("channelOrBonnet")
-    channelCover = inputs.get("channelCover")
-    tubeSheetStationary = inputs.get("tubeSheetStationary")
-    tubeSheetFloating = inputs.get("tubeSheetFloating")
-    floatingHeadCover = inputs.get("floatingHeadCover")
-    impingementPlate = inputs.get("impingementPlate")
-
-    bafflesCross = inputs.get("bafflesCross")
-    bafflesCrossType = inputs.get("bafflesCrossType")
-    cutDiam = inputs.get("cutDiam")
-    spacing = inputs.get("spacing")
-    bafflesCrossInlet = inputs.get("bafflesCrossInlet")
-    bafflesLong = inputs.get("bafflesLong")
-    sealType = inputs.get("sealType")
-    supportsTube = inputs.get("supportsTube")
-    UBend = inputs.get("UBend")
-    UBendType = inputs.get("UBendType")
-    supportToTubesheetInlet = inputs.get("supportToTubesheetInlet")
-    supportToTubesheetOutlet = inputs.get("supportToTubesheetOutlet")
-    bypassSealArrangement = inputs.get("bypassSealArrangement")
-    tubeTubesheetJoint = inputs.get("tubeTubesheetJoint")
-    expansionJoint = inputs.get("expansionJoint")
-    expansionJointType = inputs.get("expansionJointType")
-    RhoV2InletNozzle = inputs.get("RhoV2InletNozzle")
-    bundleEnterance = inputs.get("bundleEnterance")
-    bundleExit = inputs.get("bundleExit")
-
-    gasketsShellSide = inputs.get("gasketsShellSide")
-    gasketTubeSide = inputs.get("gasketTubeSide")
-    floatingHead = inputs.get("floatingHead")
-    codeRequirements = inputs.get("codeRequirements")
-    TEMAClass = inputs.get("TEMAClass")
-    weightShell = inputs.get("weightShell")
-    filledWithWater = inputs.get("filledWithWater")
-    bundle = inputs.get("bundle")
-    rowsSupportedInlet = inputs.get("rowsSupportedInlet")
-    rowsSupportedOutlet = inputs.get("rowsSupportedOutlet")
+    heat_exchanged = inputs.get("heat_exchanged")
+    mtd_corrected = inputs.get("mtd_corrected")
+    shell_pressure_drop = inputs.get("shell_pressure_drop")
+    shell_side_out_temp = inputs.get("shell_side_out_temp")
+    shell_velocity = inputs.get("shell_velocity")
+    specific_gravity_in_shell = inputs.get("specific_gravity_in_shell")
+    specific_gravity_in_tube = inputs.get("specific_gravity_in_tube")
+    specific_gravity_out_shell = inputs.get("specific_gravity_out_shell")
+    specific_gravity_out_tube = inputs.get("specific_gravity_out_tube")
+    specific_heat_in_shell = inputs.get("specific_heat_in_shell")
+    specific_heat_in_tube = inputs.get("specific_heat_in_tube")
+    specific_heat_out_shell = inputs.get("specific_heat_out_shell")
+    specific_heat_out_tube = inputs.get("specific_heat_out_tube")
+    surf_shell_gross = inputs.get("surf_shell_gross")
+    surf_shell_eff = inputs.get("surf_shell_eff")
+    surf_unit_eff = inputs.get("surf_unit_eff")
+    surf_unit_gross = inputs.get("surf_unit_gross")
+    thermal_conductivity_in_shell = inputs.get("thermal_conductivity_in_shell")
+    thermal_conductivity_in_tube = inputs.get("thermal_conductivity_in_tube")
+    thermal_conductivity_out_shell = inputs.get("thermal_conductivity_out_shell")
+    thermal_conductivity_out_tube = inputs.get("thermal_conductivity_out_tube")
+    transfer_rate_actual = inputs.get("transfer_rate_actual")
+    transfer_rate_clean = inputs.get("transfer_rate_clean")
+    transfer_rate_service = inputs.get("transfer_rate_service")
+    tube_pressure_drop = inputs.get("tube_pressure_drop")
+    tube_side_out_temp = inputs.get("tube_side_out_temp")
+    tube_velocity = inputs.get("tube_velocity")
+    viscosity_in_shell = inputs.get("viscosity_in_shell")
+    viscosity_in_tube = inputs.get("viscosity_in_tube")
+    viscosity_out_shell = inputs.get("viscosity_out_shell")
+    viscosity_out_tube = inputs.get("viscosity_out_tube")   
 
     wb = load_workbook('output_tema.xlsx')
     ws = wb['1 - TEMA']
@@ -1151,7 +1338,7 @@ def excel():
     ws["BC32"] = mtd_corrected
     ws['AG30'] = shell_pressure_drop
     ws['AG20'] = shell_side_out_temp
-    ws['AC29'] = shell_velocity
+    ws['U29'] = shell_velocity
     ws['U21'] = specific_gravity_in_shell
     ws['AS21'] = specific_gravity_in_tube
     ws['AG21'] = specific_gravity_out_shell
@@ -1173,133 +1360,11 @@ def excel():
     ws['N33'] = transfer_rate_service
     ws['BE30'] = tube_pressure_drop
     ws['BE20'] = tube_side_out_temp
-    ws['BA29'] = tube_velocity
-    ws['U22'] = viscosity_in_shell
-    ws['AS22'] = viscosity_in_tube
-    ws['AG22'] = viscosity_out_shell
-    ws['BE22'] = viscosity_out_tube
-    ws['O43'] = OD
-    ws['J6'] = address
-    ws['AD43'] = Thk
-    ws['AY9'] = connectParallel
-    ws['BH9'] = connectSeries
-    ws['U40'] = f'{connectionSizeShellIn1} @ {connectionSizeShellIn2}'
-    ws['U41'] = f'{connectionSizeShellOut1} @ {connectionSizeShellOut2}'
-    ws['U42'] = f'{connectionSizeShellIntermediate1} @ {connectionSizeShellIntermediate2}'
-    ws['AG40'] = f'{connectionSizeTubeIn1} @ {connectionSizeTubeIn2}'
-    ws['AG41'] = f'{connectionSizeTubeOut1} @ {connectionSizeTubeOut2}'
-    ws['AG42'] = f'{connectionSizeTubeIntermediate1} @ {connectionSizeTubeIntermediate2}'
-    ws['U39'] = corrosionAllowanceShell
-    ws['AG39'] = corrosionAllowanceTube
-    ws['U36'] = f'{designPressureShell} / {testPressureShell}'
-    ws['AG36'] = f'{designPressureTube} / {testPressureTube}'
-    ws['U37'] = designTemperatureShell
-    ws['AG37'] = designTemperatureTube
-    ws['U38'] = numberPassesShell
-    ws['AG38'] = numberPassesTube
-    ws['J5'] = customer
-    ws['AW7'] = date_input
-    ws['U13'] = fluidNameShell
-    ws['AS13'] = fluidNameTube
-    ws['U16'] = fluidQuantityLiquidInShell
-    ws['AS16'] = fluidQuantityLiquidInTube
-    ws['AG16'] = fluidQuantityLiquidOutShell
-    ws['BE16'] = fluidQuantityLiquidOutTube
-    ws['U19'] = fluidQuantityNoncondensablesInShell
-    ws['AS19'] = fluidQuantityNoncondensablesInTube
-    ws['AG19'] = fluidQuantityNoncondensablesOutShell
-    ws['BE19'] = fluidQuantityNoncondensablesOutTube
-    ws['U17'] = fluidQuantitySteamInShell
-    ws['AS17'] = fluidQuantitySteamInTube
-    ws['AG17'] = fluidQuantitySteamOutShell
-    ws['BE17'] = fluidQuantitySteamOutTube
-    ws['U15'] = fluidQuantityVaporInShell
-    ws['AS15'] = fluidQuantityVaporInTube
-    ws['AG15'] = fluidQuantityVaporOutShell
-    ws['BE15'] = fluidQuantityVaporOutTube
-    ws['U18'] = fluidQuantityWaterInShell
-    ws['AS18'] = fluidQuantityWaterInTube
-    ws['AG18'] = fluidQuantityWaterOutShell
-    ws['BE18'] = fluidQuantityWaterOutTube
-    ws['U14'] = fluidQuantityTotalShell
-    ws['AS14'] = fluidQuantityTotalTube
-    ws['AC31'] = foulingResistanceShell
-    ws['AC28'] = inletPressureShell
-    ws['BA28'] = inletPressureTube
-    ws['AW8'] = itemNo
-    ws['AW4'] = jobNo
-    ws['U27'] = latentHeatInShell
-    ws['AS27'] = latentHeatInTube
-    ws['AG27'] = latentHeatOutShell
-    ws['BE27'] = latentHeatOutTube
-    ws['AS43'] = length
-    ws['U23'] = molecularWeightInShell
-    ws['AS23'] = molecularWeightInTube
-    ws['AG23'] = molecularWeightOutShell
-    ws['BE23'] = molecularWeightOutTube
-    ws['U24'] = molecularWeightNoncondensableInShell
-    ws['AS24'] = molecularWeightNoncondensableInTube
-    ws['AG24'] = molecularWeightNoncondensableOutShell
-    ws['BE24'] = molecularWeightNoncondensableOutTube
-    ws['AE9'] = orientation
-    ws['BH43'] = pitch
-    ws['J7'] = plantLocation
-    ws['U30'] = pressureDropAllowShell
-    ws['AS30'] = pressureDropAllowTube
-    ws['AW6'] = proposalNo
-    ws['AW5'] = referenceNo
-    ws['BK7'] = rev
-    ws['J8'] = serviceOfUnit
-    ws['AE10'] = shellUnit
-    ws['F9'] = sizeHorizontal
-    ws['O9'] = sizeVertical
-    ws['U20'] = temperatureInShell
-    ws['AS20'] = temperatureInTube
-    ws['G43'] = tubeNo
-    ws['Z9'] = type_text
-
-    ws['G44'] = tubeType
-    ws['AI44'] = tubeMaterial
-    ws['BN44'] = tubePattern
-    ws['F45'] = shellMaterial
-    ws['V45'] = shellID
-    ws['AD45'] = shellOD
-    ws['AV45'] = shellCover
-    ws['L46'] = channelOrBonnet
-    ws['AV46'] = channelCover
-    ws['L47'] = tubeSheetStationary
-    ws['AX47'] = tubeSheetFloating
-    ws['L48'] = floatingHeadCover
-    ws['AX48'] = impingementPlate
-    ws['I49'] = bafflesCross
-    ws['W49'] = bafflesCrossType
-    ws['AN49'] = cutDiam
-    ws['AY49'] = spacing
-    ws['BH49'] = bafflesCrossInlet
-    ws['I50'] = bafflesLong
-    ws['AJ50'] = sealType
-    ws['I51'] = supportsTube
-    ws['AJ51'] = UBend
-    ws['BJ51'] = UBendType
-    ws['Y52'] = supportToTubesheetInlet
-    ws['AJ52'] = supportToTubesheetOutlet
-    ws['Y53'] = rowsSupportedInlet
-    ws['AJ53'] = rowsSupportedOutlet
-    ws['P54'] = bypassSealArrangement
-    ws['AQ54'] = tubeTubesheetJoint
-    ws['M55'] = expansionJoint
-    ws['AI55'] = expansionJointType
-    ws['K56'] = RhoV2InletNozzle
-    ws['AN56'] = bundleEnterance
-    ws['BA56'] = bundleExit
-    ws['K57'] = gasketsShellSide
-    ws['AK57'] = gasketTubeSide
-    ws['K58'] = floatingHead
-    ws['K59'] = codeRequirements
-    ws['BB59'] = TEMAClass
-    ws['I60'] = weightShell
-    ws['AE60'] = filledWithWater
-    ws['AY60'] = bundle
+    ws['AS29'] = tube_velocity
+    ws['U23'] = viscosity_in_shell
+    ws['AS23'] = viscosity_in_tube
+    ws['AG23'] = viscosity_out_shell
+    ws['BE23'] = viscosity_out_tube
 
     output = io.BytesIO()
     wb.save(output)
@@ -1312,33 +1377,13 @@ def excel():
         as_attachment=True
     )
 
-@app.route("/generate-file")
-def generate_file():
-    path = "generated/result.txt"
-
-    os.makedirs("generated", exist_ok=True)
-
-    with open(path, "w", encoding="utf-8") as f:
-        f.write("Hello. This is server generated file!")
-
-    return {"path": path}
-
-import shutil
-
-class Api:
-    def save_file(self, src_path):
-        # WebView 앱이 저장해줄 위치
-        dst_path = os.path.join(os.path.expanduser("~/Downloads"), os.path.basename(src_path))
-        shutil.copy(src_path, dst_path)
-        return f"Saved to: {dst_path}"
-
-api = Api()
 
 def start_flask():
-    app.run()
+    app.run(debug=True)
 
 if __name__ == "__main__":
-    t = threading.Thread(target=start_flask, daemon=True)
-    t.start()
-    webview.create_window("React + Python", "http://127.0.0.1:5000", js_api=api)
-    webview.start()
+    app.run(debug=True)
+    #t = threading.Thread(target=start_flask, daemon=True)
+    #t.start()
+    #webview.create_window("React + Python", "http://127.0.0.1:5000")
+    #webview.start()

@@ -11,9 +11,7 @@ export interface OutputType {
     itemNo: string;
     sizeHorizontal: string;
     sizeVertical: string;
-    type1: string;
-    type2: string;
-    type3: string;
+    type: string;
     orientation: string;
     connectParallel: string;
     connectSeries: string;
@@ -123,4 +121,49 @@ export interface OutputType {
     Thk: string;
     length: string;
     pitch: string;
+
+    tubeType: string;
+    tubeMaterial: string;
+    tubePattern: string;
+    shellMaterial: string;
+    shellID: string;
+    shellOD: string;
+    shellCover: string;
+    channelOrBonnet: string;
+    channelCover: string;
+    tubeSheetStationary: string;
+    tubeSheetFloating: string;
+    floatingHeadCover: string;
+    impingementPlate: string;
+
+    bafflesCross: string;
+    bafflesCrossType: string;
+    cutDiam: string;
+    spacing: string;
+    bafflesCrossInlet: string;
+    bafflesLong: string;
+    sealType: string;
+    supportsTube: string;
+    UBend: string;
+    UBendType: string;
+    supportToTubesheetInlet: string;
+    supportToTubesheetOutlet: string;
+    bypassSealArrangement: string;
+    tubeTubesheetJoint: string;
+    expansionJoint: string;
+    expansionJointType: string;
+    RhoV2InletNozzle: string;
+    bundleEnterance: string;
+    bundleExit: string;
+
+    gasketsShellSide: string;
+    gasketTubeSide: string;
+    floatingHead: string;
+    codeRequirements: string;
+    TEMAClass: string;
+    weightShell: string;
+    filledWithWater: string;
+    bundle: string;
+    rowsSupportedInlet: string;
+    rowsSupportedOutlet: string;
 }

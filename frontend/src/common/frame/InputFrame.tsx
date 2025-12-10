@@ -4,9 +4,8 @@ import CustomNumberInput from "../components/NumberInput";
 import CustomInput from "../components/CustomInput";
 import CustomDropdown from "../components/CustomDropdown";
 import CustomDateInput from "../components/CustomDateInput";
-import type { OutputType } from "../type/Output";
-import { mixture } from "../const/mixture";
-import { exampleInput } from "../const/mock";
+import { exampleInput, initalOutput } from "../const/mock";
+import type { Result } from "../../App";
 
 const RowWarapper = styled.div`
     display: flex; 
@@ -43,13 +42,14 @@ const ContentsWrapper = styled.div`
     box-sizing: border-box;
 `;
 
+
 interface InputFrameProps {
-  setOutput: React.Dispatch<React.SetStateAction<OutputType>>;
+  setResult: React.Dispatch<React.SetStateAction<Result>>;
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
   setIsInput: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export default function InputFrame({setOutput, setLoading, setIsInput} : InputFrameProps) {
+export default function InputFrame({setResult, setLoading, setIsInput} : InputFrameProps) {
     const [unitIdentifier, setUnitIdentifier] = useState<string>('');
     const [caseMode, setCaseMode] = useState<string>('');
     const [serviceType, setServiceType] = useState<string>('');
@@ -64,9 +64,7 @@ export default function InputFrame({setOutput, setLoading, setIsInput} : InputFr
     const [serviceUnit, setServiceUnit] = useState<string>('');
     const [date, setDate] = useState<string>('');
     const [rev, setRev] = useState<string>('');
-    const [type1, setType1] = useState<string>('');
-    const [type2, setType2] = useState<string>('');
-    const [type3, setType3] = useState<string>('');
+    const [type, setType] = useState<string>('');
     const [orientation, setOrientation] = useState<string>('');
     const [hotFluid, setHotFluid] = useState<string>('');
     const [unitAngle, setUnitAngle] = useState<string>('');
@@ -77,21 +75,15 @@ export default function InputFrame({setOutput, setLoading, setIsInput} : InputFr
     const [fluidNameTube, setFluidNameTube] = useState<string>('');
     const [fluidQuantityTotalShell, setFluidQuantityTotalShell] = useState<string>('');
     const [fluidQuantityTotalTube, setFluidQuantityTotalTube] = useState<string>('');
-    const [vaporWeightFractionInShell, setVaporWeightFractionInShell] = useState<string>('');
-    const [vaporWeightFractionOutShell, setVaporWeightFractionOutShell] = useState<string>('');
-    const [vaporWeightFractionInTube, setVaporWeightFractionInTube] = useState<string>('');
-    const [vaporWeightFractionOutTube, setVaporWeightFractionOutTube] = useState<string>('');
     const [inletPressureShell, setInletPressureShell] = useState<string>('');
     const [inletPressureTube, setInletPressureTube] = useState<string>('');
     const [pressureDropAllowShell, setPressureDropAllowShell] = useState<string>('');
     const [pressureDropAllowTube, setPressureDropAllowTube] = useState<string>('');
-    const [exchangerDuty, setExchangerDuty] = useState<string>('');
     const [temperatureInShell, setTemperatureInShell] = useState<string>('');
     const [temperatureOutShell, setTemperatureOutShell] = useState<string>('');
     const [temperatureInTube, setTemperatureInTube] = useState<string>('');
     const [temperatureOutTube, setTemperatureOutTube] = useState<string>('');
     const [foulingResistanceShell, setFoulingResistanceShell] = useState<string>('');
-    const [foulingResistanceTube, setFoulingResistanceTube] = useState<string>('');
 
     const [designPressureShell, setDesignPressureShell] = useState<string>('');
     const [testPressureShell, setTestPressureShell] = useState<string>('');
@@ -118,6 +110,32 @@ export default function InputFrame({setOutput, setLoading, setIsInput} : InputFr
     const [connectionSizeShellIntermediate1, setConnectionSizeShellIntermediate1] = useState<string>('');
     const [connectionSizeShellIntermediate2, setConnectionSizeShellIntermediate2] = useState<string>('');
 
+    const [fluidQuantitySteamInTube, setFluidQuantitySteamInTube] = useState('');
+    const [fluidQuantitySteamInShell, setFluidQuantitySteamInShell] = useState('');
+    const [fluidQuantitySteamOutTube, setFluidQuantitySteamOutTube] = useState('');
+    const [fluidQuantitySteamOutShell, setFluidQuantitySteamOutShell] = useState('');
+    const [fluidQuantityVaporInTube, setFluidQuantityVaporInTube] = useState('');
+    const [fluidQuantityVaporInShell, setFluidQuantityVaporInShell] = useState('');
+    const [fluidQuantityVaporOutTube, setFluidQuantityVaporOutTube] = useState('');
+    const [fluidQuantityVaporOutShell, setFluidQuantityVaporOutShell] = useState('');
+    const [fluidQuantityLiquidInTube, setFluidQuantityLiquidInTube] = useState('');
+    const [fluidQuantityLiquidInShell, setFluidQuantityLiquidInShell] = useState('');
+    const [fluidQuantityLiquidOutTube, setFluidQuantityLiquidOutTube] = useState('');
+    const [fluidQuantityLiquidOutShell, setFluidQuantityLiquidOutShell] = useState('');
+    const [fluidQuantityWaterInTube, setFluidQuantityWaterInTube] = useState('');
+    const [fluidQuantityWaterInShell, setFluidQuantityWaterInShell] = useState('');
+    const [fluidQuantityWaterOutTube, setFluidQuantityWaterOutTube] = useState('');
+    const [fluidQuantityWaterOutShell, setFluidQuantityWaterOutShell] = useState('');
+    const [fluidQuantityNoncondensablesInTube, setFluidQuantityNoncondensablesInTube] = useState('');
+    const [fluidQuantityNoncondensablesInShell, setFluidQuantityNoncondensablesInShell] = useState('');
+    const [fluidQuantityNoncondensablesOutTube, setFluidQuantityNoncondensablesOutTube] = useState('');
+    const [fluidQuantityNoncondensablesOutShell, setFluidQuantityNoncondensablesOutShell] = useState('');
+
+    const [latentHeatInShell, setLatentHeatInShell] = useState('');
+    const [latentHeatOutShell, setLatentHeatOutShell] = useState('');
+    const [latentHeatInTube, setLatentHeatInTube] = useState('');
+    const [latentHeatOutTube, setLatentHeatOutTube] = useState('');
+
     const [tubeNo, setTubeNo] = useState<string>('');
     const [OD, setOD] = useState<string>('');
     const [Thk, setThk] = useState<string>('');
@@ -125,6 +143,51 @@ export default function InputFrame({setOutput, setLoading, setIsInput} : InputFr
     const [pitch, setPitch] = useState<string>('');
     const [itemNo, setItemNo] = useState<string>('');
 
+    const [tubeType, setTubeType] = useState<string>('');
+    const [tubeMaterial, setTubeMaterial] = useState<string>('');
+    const [tubePattern, setTubePattern] = useState<string>('');
+    const [shellMaterial, setShellMaterial] = useState<string>('');
+    const [shellID, setShellID] = useState<string>('');
+    const [shellOD, setShellOD] = useState<string>('');
+    const [shellCover, setShellCover] = useState<string>('');
+    const [channelOrBonnet, setChannelOrBonnet] = useState<string>('');
+    const [channelCover, setChannelCover] = useState<string>('');
+    const [tubeSheetStationary, setTubeSheetStationary] = useState<string>('');
+    const [tubeSheetFloating, setTubeSheetFloating] = useState<string>('');
+    const [floatingHeadCover, setFloatingHeadCover] = useState<string>('');
+    const [impingementPlate, setImpingementPlate] = useState<string>('');
+
+    const [bafflesCross, setBaffleCross] = useState<string>('');
+    const [bafflesCrossType, setBafflesCrossType] = useState<string>('');
+    const [cutDiam, setCutDiam] = useState<string>('');
+    const [spacing, setSpacing] = useState<string>('');
+    const [bafflesCrossInlet, setBaffleCrossInlet] = useState<string>('');
+    const [bafflesLong, setBafflesLong] = useState<string>('');
+    const [sealType, setSealType] = useState<string>('');
+    const [supportsTube, setSupportsTube] = useState<string>('');
+    const [UBend, setUBend] = useState<string>('');
+    const [UBendType, setUBendType] = useState<string>('');
+    const [supportToTubesheetInlet, setSupportToTubesheetInlet] = useState<string>('');
+    const [supportToTubesheetOutlet, setSupportToTubesheetOutlet] = useState<string>('');
+    const [bypassSealArrangement, setBypassSealArrangement] = useState<string>('');
+    const [tubeTubesheetJoint, setTubeTubesheetJoint] = useState<string>('');
+    const [expansionJoint, setExpansionJoint] = useState<string>('');
+    const [expansionJointType, setExpansionJointType] = useState<string>('');
+    const [RhoV2InletNozzle, setRhoV2InletNozzle] = useState<string>('');
+    const [bundleEnterance, setBundleEnterance] = useState<string>('');
+    const [bundleExit, setBundleExit] = useState<string>('');
+
+    const [gasketsShellSide, setGasketsShellSide] = useState<string>('');
+    const [gasketTubeSide, setGasketTubeSide] = useState<string>('');
+    const [floatingHead, setFloatingHead] = useState<string>('');
+    const [codeRequirements, setCodeRequirements] = useState<string>('');
+    const [TEMAClass, setTEMAClass] = useState<string>('');
+    const [weightShell, setWeightShell] = useState<string>('');
+    const [filledWithWater, setFilledWithWater] = useState<string>('');
+    const [bundle, setBundle] = useState<string>('');
+
+    const [rowsSupportedInlet, setRowsSupportedInlet] = useState<string>('');
+    const [rowsSupportedOutlet, setRowsSupportedOutlet] = useState<string>('');
 
     const errorFunction = (v: string) => {
         if (v == '잘못된 입력') {
@@ -135,10 +198,10 @@ export default function InputFrame({setOutput, setLoading, setIsInput} : InputFr
 
     const handleCalculate = async () => {
         try {
-        const inputs = exampleInput;
+        const inputs = {...exampleInput, 'init_data': initalOutput};
         console.log('inputs', JSON.stringify(inputs));
 
-        const response = await fetch('http://127.0.0.1:5000/api/simulate', {
+        const response = await fetch('http://127.0.0.1:5000/api/calc', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(inputs),
@@ -150,78 +213,143 @@ export default function InputFrame({setOutput, setLoading, setIsInput} : InputFr
 
         const data = await response.json();
         console.log(data);
+
+        setResult(data);
         } catch (error: any) {
         console.error('Error:', error);
         }
     };
 
-    const handleOnCalculate = () => {
+    const handleOnCalculate = async () => {
         setLoading(true);
-        setOutput(prev => ({
-            ...prev,
-            customer: customer,
-            jobNo: jobNo,
-            referenceNo: refNo,
-            address: address,
-            proposalNo: proposalNo,
-            plantLocation: location,
-            date: date,
-            rev: rev,
-            serviceOfUnit: serviceUnit,
-            itemNo: itemNo,
-            type1: type1,
-            type2: type2,
-            type3: type3,
-            orientation: orientation,
-            connectParallel: connectParallel,
-            connectSeries: connectSeries,
-            fluidNameShell: fluidNameShell,
-            fluidNameTube: fluidNameTube,
-            fluidQuantityTotalShell: fluidQuantityTotalShell,
-            fluidQuantityTotalTube: fluidQuantityTotalTube,
-            temperatureInShell: temperatureInShell,
-            temperatureOutShell: temperatureOutShell,
-            temperatureInTube: temperatureInTube,
-            temperatureOutTube: temperatureOutTube,
-            inletPressureShell: inletPressureShell,
-            inletPressureTube: inletPressureTube,
-            pressureDropAllowShell: pressureDropAllowShell,
-            pressureDropAllowTube: pressureDropAllowTube,
-            foulingResistanceShell: foulingResistanceShell,
-            foulingResistanceTube: foulingResistanceTube,
-            designPressureShell: designPressureShell,
-            testPressureShell: testPressureShell,
-            designPressureTube: designPressureTube,
-            testPressureTube: testPressureTube,
-            designTemperatureShell: designTemperatureShell,
-            designTemperatureTube: designTemperatureTube,
-            numberPassesShell: numberPassesShell,
-            numberPassesTube: numberPassesTube,
-            corrosionAllowanceShell: corrosionAllowanceShell,
-            corrosionAllowanceTube: corrosionAllowanceTube,
-            connectionSizeShellIn1: connectionSizeShellIn1,
-            connectionSizeShellIn2: connectionSizeShellIn2,
-            connectionSizeShellOut1: connectionSizeShellOut1,
-            connectionSizeShellOut2: connectionSizeShellOut2,
-            connectionSizeShellIntermediate1: connectionSizeShellIntermediate1,
-            connectionSizeShellIntermediate2: connectionSizeShellIntermediate2,
-            connectionSizeTubeIn1: connectionSizeTubeIn1,
-            connectionSizeTubeIn2: connectionSizeTubeIn2,
-            connectionSizeTubeOut1: connectionSizeTubeOut1,
-            connectionSizeTubeOut2: connectionSizeTubeOut2,
-            connectionSizeTubeIntermediate1: connectionSizeTubeIntermediate1,
-            connectionSizeTubeIntermediate2: connectionSizeTubeIntermediate2,
-            tubeNo: tubeNo,
-            OD: OD,
-            Thk: Thk,
-            length: length,
-            pitch: pitch
+        await handleCalculate();
+        setResult(prev => ({
+            imgData: prev.imgData,
+            resData :{
+                ...prev.resData,
+                customer: customer,
+                jobNo: jobNo,
+                referenceNo: refNo,
+                address: address,
+                proposalNo: proposalNo,
+                plantLocation: location,
+                date: date,
+                rev: rev,
+                serviceOfUnit: serviceUnit,
+                itemNo: itemNo,
+                type: type,
+                orientation: orientation,
+                connectParallel: connectParallel,
+                connectSeries: connectSeries,
+                fluidNameShell: fluidNameShell,
+                fluidNameTube: fluidNameTube,
+                fluidQuantityTotalShell: fluidQuantityTotalShell,
+                fluidQuantityTotalTube: fluidQuantityTotalTube,
+                fluidQuantityVaporInTube: fluidQuantityVaporInTube,
+                fluidQuantityVaporOutTube: fluidQuantityVaporOutTube,
+                fluidQuantityLiquidInTube: fluidQuantityLiquidInTube,
+                fluidQuantityLiquidOutTube: fluidQuantityLiquidOutTube,
+                fluidQuantitySteamInTube: fluidQuantitySteamInTube,
+                fluidQuantitySteamOutTube: fluidQuantitySteamOutTube,
+                fluidQuantityWaterInTube: fluidQuantityWaterInTube,
+                fluidQuantityWaterOutTube: fluidQuantityWaterOutTube,
+                fluidQuantityNoncondensablesInTube: fluidQuantityNoncondensablesInTube,
+                fluidQuantityNoncondensablesOutTube: fluidQuantityNoncondensablesOutTube,
+                fluidQuantityVaporInShell: fluidQuantityVaporInShell,
+                fluidQuantityVaporOutShell: fluidQuantityVaporOutShell,
+                fluidQuantityLiquidInShell: fluidQuantityLiquidInShell,
+                fluidQuantityLiquidOutShell: fluidQuantityLiquidOutShell,
+                fluidQuantitySteamInShell: fluidQuantitySteamInShell,
+                fluidQuantitySteamOutShell: fluidQuantitySteamOutShell,
+                fluidQuantityWaterInShell: fluidQuantityWaterInShell,
+                fluidQuantityWaterOutShell: fluidQuantityWaterOutShell,
+                fluidQuantityNoncondensablesInShell: fluidQuantityNoncondensablesInShell,
+                fluidQuantityNoncondensablesOutShell: fluidQuantityNoncondensablesOutShell,
+                temperatureInShell: temperatureInShell,
+                temperatureOutShell: temperatureOutShell,
+                temperatureInTube: temperatureInTube,
+                temperatureOutTube: temperatureOutTube,
+                inletPressureShell: inletPressureShell,
+                inletPressureTube: inletPressureTube,
+                pressureDropAllowShell: pressureDropAllowShell,
+                pressureDropAllowTube: pressureDropAllowTube,
+                foulingResistanceShell: foulingResistanceShell,
+                designPressureShell: designPressureShell,
+                testPressureShell: testPressureShell,
+                designPressureTube: designPressureTube,
+                testPressureTube: testPressureTube,
+                designTemperatureShell: designTemperatureShell,
+                designTemperatureTube: designTemperatureTube,
+                numberPassesShell: numberPassesShell,
+                numberPassesTube: numberPassesTube,
+                corrosionAllowanceShell: corrosionAllowanceShell,
+                corrosionAllowanceTube: corrosionAllowanceTube,
+                connectionSizeShellIn1: connectionSizeShellIn1,
+                connectionSizeShellIn2: connectionSizeShellIn2,
+                connectionSizeShellOut1: connectionSizeShellOut1,
+                connectionSizeShellOut2: connectionSizeShellOut2,
+                connectionSizeShellIntermediate1: connectionSizeShellIntermediate1,
+                connectionSizeShellIntermediate2: connectionSizeShellIntermediate2,
+                connectionSizeTubeIn1: connectionSizeTubeIn1,
+                connectionSizeTubeIn2: connectionSizeTubeIn2,
+                connectionSizeTubeOut1: connectionSizeTubeOut1,
+                connectionSizeTubeOut2: connectionSizeTubeOut2,
+                connectionSizeTubeIntermediate1: connectionSizeTubeIntermediate1,
+                connectionSizeTubeIntermediate2: connectionSizeTubeIntermediate2,
+                tubeNo: tubeNo,
+                OD: OD,
+                Thk: Thk,
+                length: length,
+                pitch: pitch,
+
+                tubeType: tubeType,
+                tubeMaterial: tubeMaterial,
+                tubePattern: tubePattern,
+                shellMaterial: shellMaterial,
+                shellID: shellID,
+                shellOD: shellOD,
+                shellCover: shellCover,
+                channelOrBonnet: channelOrBonnet,
+                channelCover: channelCover,
+                tubeSheetStationary: tubeSheetStationary,
+                tubeSheetFloating: tubeSheetFloating,
+                floatingHeadCover: floatingHeadCover,
+                impingementPlate: impingementPlate,
+
+                bafflesCross: bafflesCross,
+                bafflesCrossType: bafflesCrossType,
+                cutDiam: cutDiam,
+                spacing: spacing,
+                bafflesCrossInlet: bafflesCrossInlet,
+                bafflesLong: bafflesLong,
+                sealType: sealType,
+                supportsTube: supportsTube,
+                UBend: UBend,
+                UBendType: UBendType,
+                supportToTubesheetInlet: supportToTubesheetInlet,
+                supportToTubesheetOutlet: supportToTubesheetOutlet,
+                bypassSealArrangement: bypassSealArrangement,
+                tubeTubesheetJoint: tubeTubesheetJoint,
+                expansionJoint: expansionJoint,
+                expansionJointType: expansionJointType,
+                RhoV2InletNozzle: RhoV2InletNozzle,
+                bundleEnterance: bundleEnterance,
+                bundleExit: bundleExit,
+
+                gasketsShellSide: gasketsShellSide,
+                gasketTubeSide: gasketTubeSide,
+                floatingHead: floatingHead,
+                codeRequirements: codeRequirements,
+                TEMAClass: TEMAClass,
+                weightShell: weightShell,
+                filledWithWater: filledWithWater,
+                bundle: bundle,
+                rowsSupportedInlet: rowsSupportedInlet,
+                rowsSupportedOutlet: rowsSupportedOutlet
+            }
         }));
-        handleCalculate();
-        setTimeout(() => {
-            setIsInput(false);
-            setLoading(false);
-        }, 2000);
+        setIsInput(false);
+        setLoading(false);
     }
     
     return (
@@ -358,39 +486,7 @@ export default function InputFrame({setOutput, setLoading, setIsInput} : InputFr
                         <div style={{width: 140, textAlign: 'left'}}>
                             Type
                         </div>
-                        <div style={{width: 100}}>
-                            <CustomDropdown
-                                value={type1}
-                                onChange={setType1}
-                                options={[
-                                    "A",
-                                    "B",
-                                ]}
-                                placeholder=""
-                            />
-                        </div>
-                        <div style={{width: 100}}>
-                            <CustomDropdown
-                                value={type2}
-                                onChange={setType2}
-                                options={[
-                                    "E",
-                                    "F",
-                                ]}
-                                placeholder=""
-                            />
-                        </div>
-                        <div style={{width: 100}}>
-                            <CustomDropdown
-                                value={type3}
-                                onChange={setType3}
-                                options={[
-                                    "M",
-                                    "L",
-                                ]}
-                                placeholder=""
-                            />
-                        </div>
+                        <CustomInput value={type} onChange={setType}/>
                     </ContentsWrapper>
                     <ContentsWrapper style={{border: 'none'}}>
                         <div style={{width: 150}}>
@@ -470,6 +566,129 @@ export default function InputFrame({setOutput, setLoading, setIsInput} : InputFr
                 <ContentsWrapper style={{justifyContent: 'center'}}><CustomNumberInput value={fluidQuantityTotalShell} onChange={setFluidQuantityTotalShell}/></ContentsWrapper>
                 <ContentsWrapper style={{justifyContent: 'center'}}><CustomNumberInput value={fluidQuantityTotalTube} onChange={setFluidQuantityTotalTube}/></ContentsWrapper>
             </RowWarapper>
+            <RowWarapper>
+                    <ContentsWrapper><div style={{width: 30}} />Vapor (In/Out)</ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <CustomInput value={fluidQuantityVaporInShell} onChange={setFluidQuantityVaporInShell}/>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <CustomInput value={fluidQuantityVaporOutShell} onChange={setFluidQuantityVaporOutShell}/>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <CustomInput value={fluidQuantityVaporInTube} onChange={setFluidQuantityVaporInTube}/>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <CustomInput value={fluidQuantityVaporOutTube} onChange={setFluidQuantityVaporOutTube}/>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                </RowWarapper>
+
+                {/* Liquid */}
+                <RowWarapper>
+                    <ContentsWrapper><div style={{width: 30}} />Liquid</ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <CustomInput value={fluidQuantityLiquidInShell} onChange={setFluidQuantityLiquidInShell}/>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <CustomInput value={fluidQuantityLiquidOutShell} onChange={setFluidQuantityLiquidOutShell}/>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <CustomInput value={fluidQuantityLiquidInTube} onChange={setFluidQuantityLiquidInTube}/>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <CustomInput value={fluidQuantityLiquidOutTube} onChange={setFluidQuantityLiquidOutTube}/>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                </RowWarapper>
+
+                {/* Steam */}
+                <RowWarapper>
+                    <ContentsWrapper><div style={{width: 30}} />Steam</ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <CustomInput value={fluidQuantitySteamInShell} onChange={setFluidQuantitySteamInShell}/>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <CustomInput value={fluidQuantitySteamOutShell} onChange={setFluidQuantitySteamOutShell}/>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <CustomInput value={fluidQuantitySteamInTube} onChange={setFluidQuantitySteamInTube}/>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <CustomInput value={fluidQuantitySteamOutTube} onChange={setFluidQuantitySteamOutTube}/>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                </RowWarapper>
+
+                {/* Water */}
+                <RowWarapper>
+                    <ContentsWrapper><div style={{width: 30}} />Water</ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', 'border': 'none', padding: 0}}>
+                                <CustomInput value={fluidQuantityWaterInShell} onChange={setFluidQuantityWaterInShell}/>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', 'border': 'none', padding: 0}}>
+                                <CustomInput value={fluidQuantityWaterOutShell} onChange={setFluidQuantityWaterOutShell}/>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', 'border': 'none', padding: 0}}>
+                                <CustomInput value={fluidQuantityWaterInTube} onChange={setFluidQuantityWaterInTube}/>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', 'border': 'none', padding: 0}}>
+                                <CustomInput value={fluidQuantityWaterOutTube} onChange={setFluidQuantityWaterOutTube}/>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                </RowWarapper>
+
+                {/* Noncondensables */}
+                <RowWarapper>
+                    <ContentsWrapper><div style={{width: 30}} />Noncondensables</ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <CustomInput value={fluidQuantityNoncondensablesInShell} onChange={setFluidQuantityNoncondensablesInShell}/>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <CustomInput value={fluidQuantityNoncondensablesOutShell} onChange={setFluidQuantityNoncondensablesOutShell}/>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                    <ContentsWrapper>
+                        <RowWarapper style={{gap: 10}}>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <CustomInput value={fluidQuantityNoncondensablesInTube} onChange={setFluidQuantityNoncondensablesInTube}/>
+                            </ContentsWrapper>
+                            <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
+                                <CustomInput value={fluidQuantityNoncondensablesOutTube} onChange={setFluidQuantityNoncondensablesOutTube}/>
+                            </ContentsWrapper>
+                        </RowWarapper>
+                    </ContentsWrapper>
+                </RowWarapper>
             {/* Temperature */}
             <RowWarapper>
                 <ContentsWrapper>Temperature (In/Out)<div style={{width: 60}} />°C</ContentsWrapper>
@@ -494,26 +713,26 @@ export default function InputFrame({setOutput, setLoading, setIsInput} : InputFr
                     </RowWarapper>
                 </ContentsWrapper>
             </RowWarapper>
-            {/* Vapor weight fraction */}
+
             <RowWarapper>
-                <ContentsWrapper>Vapor weight fraction (In/Out)</ContentsWrapper>
+                <ContentsWrapper>Latent Heat (In/Out)<div style={{width: 60}} />kJ/kg</ContentsWrapper>
                 <ContentsWrapper>
                     <RowWarapper style={{gap: 10}}>
                         <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                            <CustomNumberInput value={vaporWeightFractionInShell} onChange={setVaporWeightFractionInShell}/>
+                            <CustomNumberInput value={latentHeatInShell} onChange={setLatentHeatInShell}/>
                         </ContentsWrapper>
                         <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                            <CustomNumberInput value={vaporWeightFractionOutShell} onChange={setVaporWeightFractionOutShell}/>
+                            <CustomNumberInput value={latentHeatOutShell} onChange={setLatentHeatOutShell}/>
                         </ContentsWrapper>
                     </RowWarapper>
                 </ContentsWrapper>
                 <ContentsWrapper>
                     <RowWarapper style={{gap: 10}}>
                         <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                            <CustomNumberInput value={vaporWeightFractionInTube} onChange={setVaporWeightFractionInTube}/>
+                            <CustomNumberInput value={latentHeatInTube} onChange={setLatentHeatInTube}/>
                         </ContentsWrapper>
                         <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                            <CustomNumberInput value={vaporWeightFractionOutTube} onChange={setVaporWeightFractionOutTube}/>
+                            <CustomNumberInput value={latentHeatOutTube} onChange={setLatentHeatOutTube}/>
                         </ContentsWrapper>
                     </RowWarapper>
                 </ContentsWrapper>
@@ -545,16 +764,7 @@ export default function InputFrame({setOutput, setLoading, setIsInput} : InputFr
                 <ContentsWrapper>
                     <CustomNumberInput value={foulingResistanceShell} onChange={setFoulingResistanceShell}/>
                 </ContentsWrapper>
-                <ContentsWrapper>
-                    <CustomNumberInput value={foulingResistanceTube} onChange={setFoulingResistanceTube}/>
-                </ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>Exchanger duty<div style={{width: 100}} />KW</ContentsWrapper>
-                <ContentsWrapper style={{border: 'none'}}>
-                    <CustomNumberInput value={exchangerDuty} onChange={setExchangerDuty}/>
-                </ContentsWrapper>
-                <ContentsWrapper style={{border: 'none'}}/>
+                <ContentsWrapper></ContentsWrapper>
             </RowWarapper>
 
             {/* GEOMETRY Header */}
@@ -660,34 +870,372 @@ export default function InputFrame({setOutput, setLoading, setIsInput} : InputFr
                     </ColumnWrapper>
                 </RowWarapper>
             </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper style={{gap: 10}}>
-                    <div style={{width: 80, flexShrink: 0}}>
-                        Tube No.
+            <ContentsWrapper style={{padding: 0}}>
+                <RowWarapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        <div style={{width: 80, flexShrink: 0}}>
+                            Tube No.
+                        </div>
+                        <CustomNumberInput value={tubeNo} onChange={setTubeNo}/>
+                    </ContentsWrapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        OD
+                        <CustomNumberInput value={OD} onChange={setOD}/>
+                        mm
+                    </ContentsWrapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        Thk(avg)
+                        <CustomNumberInput value={Thk} onChange={setThk}/>
+                        mm
+                    </ContentsWrapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        Length
+                        <CustomNumberInput value={length} onChange={setLength}/>
+                        m
+                    </ContentsWrapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        Pitch
+                        <CustomNumberInput value={pitch} onChange={setPitch}/>
+                        mm
+                    </ContentsWrapper>
+                </RowWarapper>
+            </ContentsWrapper>
+            <ContentsWrapper style={{padding: 0}}>
+                <RowWarapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        <div style={{width: 80, flexShrink: 0}}>
+                            Tube Type
+                        </div>
+                        <CustomInput value={tubeType} onChange={setTubeType}/>
+                    </ContentsWrapper>
+                    
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        Material
+                        <CustomInput value={tubeMaterial} onChange={setTubeMaterial}/>
+                    </ContentsWrapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        Tube pattern
+                        <CustomInput value={tubePattern} onChange={setTubePattern}/>
+                    </ContentsWrapper>
+                </RowWarapper>
+            </ContentsWrapper>
+            <ContentsWrapper style={{padding: 0}}>
+                <RowWarapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        <div style={{width: 80, flexShrink: 0}}>
+                            Shell
+                        </div>
+                        <CustomInput value={shellMaterial} onChange={setShellMaterial}/>
+                    </ContentsWrapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none', borderRight: '2px solid #ccc', padding: 0}}>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            ID
+                            <CustomNumberInput value={shellID} onChange={setShellID}/>
+                            mm
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            OD
+                            <CustomNumberInput value={shellOD} onChange={setShellOD}/>
+                            mm
+                        </ContentsWrapper>
+                    </ContentsWrapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        Shell Cover
+                        <CustomInput value={shellCover} onChange={setShellCover}/>
+                    </ContentsWrapper>
+                </RowWarapper>
+            </ContentsWrapper>
+            <ContentsWrapper style={{padding: 0}}>
+                <RowWarapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        <div style={{width: 145, flexShrink: 0}}>
+                            Channel or Bonnet
+                        </div>
+                        <CustomInput value={channelOrBonnet} onChange={setChannelOrBonnet}/>
+                    </ContentsWrapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        Channel Cover
+                        <CustomInput value={channelCover} onChange={setChannelCover}/>
+                    </ContentsWrapper>
+                </RowWarapper>
+            </ContentsWrapper>
+            <ContentsWrapper style={{padding: 0}}>
+                <RowWarapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        <div style={{width: 155, flexShrink: 0}}>
+                            Tubesheet-Stationary
+                        </div>
+                        <CustomInput value={tubeSheetStationary} onChange={setTubeSheetStationary}/>
+                    </ContentsWrapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        Tubesheet-Floating
+                        <CustomInput value={tubeSheetFloating} onChange={setTubeSheetFloating}/>
+                    </ContentsWrapper>
+                </RowWarapper>
+            </ContentsWrapper>
+            <ContentsWrapper style={{padding: 0}}>
+                <RowWarapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        <div style={{width: 150, flexShrink: 0}}>
+                            Floating Head Cover
+                        </div>
+                        <CustomInput value={floatingHeadCover} onChange={setFloatingHeadCover}/>
+                    </ContentsWrapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        Impigement Plate
+                        <CustomInput value={impingementPlate} onChange={setImpingementPlate}/>
+                    </ContentsWrapper>
+                </RowWarapper>
+            </ContentsWrapper>
+            <ContentsWrapper style={{padding: 0}}>
+                <RowWarapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none', padding: 0}}>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 100, flexShrink: 0}}>
+                                Baffles-Cross
+                            </div>
+                            <CustomInput value={bafflesCross} onChange={setBaffleCross}/>
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 50, flexShrink: 0}}>
+                                Type
+                            </div>
+                            <CustomInput value={bafflesCrossType} onChange={setBafflesCrossType}/>
+                        </ContentsWrapper>
+                    </ContentsWrapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none', padding: 0}}>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 100, flexShrink: 0}}>
+                                %Cut (Diam)
+                            </div>
+                            <CustomNumberInput value={cutDiam} onChange={setCutDiam}/>
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 100, flexShrink: 0}}>
+                                Spacing (c/c)
+                            </div>
+                            <CustomNumberInput value={spacing} onChange={setSpacing}/>
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 50, flexShrink: 0}}>
+                                Inlet
+                            </div>
+                            <CustomNumberInput value={bafflesCrossInlet} onChange={setBaffleCrossInlet}/>
+                            mm
+                        </ContentsWrapper>
+                    </ContentsWrapper>
+                </RowWarapper>
+            </ContentsWrapper>
+            <ContentsWrapper style={{padding: 0}}>
+                <RowWarapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        <div style={{width: 100, flexShrink: 0}}>
+                            Baffles-Long
+                        </div>
+                        <CustomInput value={bafflesLong} onChange={setBafflesLong}/>
+                    </ContentsWrapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        <div style={{width: 100, flexShrink: 0}}>
+                            Seal Type
+                        </div>
+                        <CustomInput value={sealType} onChange={setSealType}/>
+                    </ContentsWrapper>
+                </RowWarapper>
+            </ContentsWrapper>
+            <ContentsWrapper style={{padding: 0}}>
+                <RowWarapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        <div style={{width: 115, flexShrink: 0}}>
+                            Supports-Tube
+                        </div>
+                        <CustomInput value={supportsTube} onChange={setSupportsTube}/>
+                    </ContentsWrapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none', padding: 0}}>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 70, flexShrink: 0}}>
+                                U-Bend
+                            </div>
+                            <CustomInput value={UBend} onChange={setUBend}/>
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 50, flexShrink: 0}}>
+                                Type
+                            </div>
+                            <CustomInput value={UBendType} onChange={setUBendType}/>
+                        </ContentsWrapper>
+                    </ContentsWrapper>
+                </RowWarapper>
+            </ContentsWrapper>
+            <ContentsWrapper style={{padding: 0}}>
+                <RowWarapper style={{alignItems: 'center'}}>
+                    <div style={{width: 250, textAlign: 'left', paddingLeft: 10}}>
+                        Distance, support to tubesheet
                     </div>
-                    <CustomNumberInput value={tubeNo} onChange={setTubeNo}/>
-                </ContentsWrapper>
-                <ContentsWrapper style={{gap: 10}}>
-                    OD
-                    <CustomNumberInput value={OD} onChange={setOD}/>
-                    mm
-                </ContentsWrapper>
-                <ContentsWrapper style={{gap: 10}}>
-                    Thk(avg)
-                    <CustomNumberInput value={Thk} onChange={setThk}/>
-                    mm
-                </ContentsWrapper>
-                <ContentsWrapper style={{gap: 10}}>
-                    Length
-                    <CustomNumberInput value={length} onChange={setLength}/>
-                    m
-                </ContentsWrapper>
-                <ContentsWrapper style={{gap: 10}}>
-                    Pitch
-                    <CustomNumberInput value={pitch} onChange={setPitch}/>
-                    mm
-                </ContentsWrapper>
-            </RowWarapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none', padding: 0, paddingRight: 5}}>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 70, flexShrink: 0}}>
+                                Inlet
+                            </div>
+                            <CustomNumberInput value={supportToTubesheetInlet} onChange={setSupportToTubesheetInlet}/>
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 50, flexShrink: 0}}>
+                                Outlet
+                            </div>
+                            <CustomNumberInput value={supportToTubesheetOutlet} onChange={setSupportToTubesheetOutlet}/>
+                        </ContentsWrapper>
+                        mm
+                    </ContentsWrapper>
+                </RowWarapper>
+            </ContentsWrapper>
+            <ContentsWrapper style={{padding: 0}}>
+                <RowWarapper style={{alignItems: 'center'}}>
+                    <div style={{width: 250, textAlign: 'left', paddingLeft: 10}}>
+                        Number of rows supported
+                    </div>
+                    <ContentsWrapper style={{gap: 10, border: 'none', padding: 0}}>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 70, flexShrink: 0}}>
+                                Inlet
+                            </div>
+                            <CustomNumberInput value={rowsSupportedInlet} onChange={setRowsSupportedInlet}/>
+                        </ContentsWrapper>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 50, flexShrink: 0}}>
+                                Outlet
+                            </div>
+                            <CustomNumberInput value={rowsSupportedOutlet} onChange={setRowsSupportedOutlet}/>
+                        </ContentsWrapper>
+                    </ContentsWrapper>
+                </RowWarapper>
+            </ContentsWrapper>
+            <ContentsWrapper style={{padding: 0}}>
+                <RowWarapper style={{alignItems: 'center'}}>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 200, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                                Bypass Seal Arrangement
+                            </div>
+                            <CustomInput value={bypassSealArrangement} onChange={setBypassSealArrangement}/>
+                    </ContentsWrapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 160, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                                Tube-Tubesheet Joint
+                            </div>
+                            <CustomInput value={tubeTubesheetJoint} onChange={setTubeTubesheetJoint}/>
+                    </ContentsWrapper>
+                </RowWarapper>
+            </ContentsWrapper>
+            <ContentsWrapper style={{padding: 0}}>
+                <RowWarapper style={{alignItems: 'center'}}>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 120, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                                Expansion Joint
+                            </div>
+                            <CustomInput value={expansionJoint} onChange={setExpansionJoint}/>
+                    </ContentsWrapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 50, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                                Type
+                            </div>
+                            <CustomInput value={expansionJointType} onChange={setExpansionJointType}/>
+                    </ContentsWrapper>
+                </RowWarapper>
+            </ContentsWrapper>
+            <ContentsWrapper style={{padding: 0}}>
+                <RowWarapper style={{alignItems: 'center'}}>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 150, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                                Rho-V2-Inlet Nozzle
+                            </div>
+                            <CustomInput value={RhoV2InletNozzle} onChange={setRhoV2InletNozzle}/>
+                            kg/m-s2
+                    </ContentsWrapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none', padding: 0, paddingRight: 5}}>
+                        <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 120, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                                Bundle Entrance
+                            </div>
+                            <CustomInput value={bundleEnterance} onChange={setBundleEnterance}/>
+                        </ContentsWrapper>
+                                                <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                            <div style={{width: 100, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                                Bundle Exit
+                            </div>
+                            <CustomInput value={bundleExit} onChange={setBundleExit}/>
+                        </ContentsWrapper>
+                        kg/m-s2
+                    </ContentsWrapper>
+                </RowWarapper>
+            </ContentsWrapper>
+            <ContentsWrapper style={{padding: 0}}>
+                <RowWarapper style={{alignItems: 'center'}}>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        <div style={{width: 150, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                            Gaskets-Shell Side
+                        </div>
+                        <CustomInput value={gasketsShellSide} onChange={setGasketsShellSide}/>
+                    </ContentsWrapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        <div style={{width: 80, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                            Tube Side
+                        </div>
+                        <CustomInput value={gasketTubeSide} onChange={setGasketTubeSide}/>
+                    </ContentsWrapper>
+                </RowWarapper>
+            </ContentsWrapper>
+            <ContentsWrapper style={{padding: 0}}>
+                <RowWarapper style={{alignItems: 'center'}}>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        <div style={{width: 150, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                            - Floating Head
+                        </div>
+                        <CustomInput value={floatingHead} onChange={setFloatingHead}/>
+                    </ContentsWrapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                    </ContentsWrapper>
+                </RowWarapper>
+            </ContentsWrapper>
+            <ContentsWrapper style={{padding: 0}}>
+                <RowWarapper style={{alignItems: 'center'}}>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        <div style={{width: 150, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                            Code Requirements
+                        </div>
+                        <CustomInput value={codeRequirements} onChange={setCodeRequirements}/>
+                    </ContentsWrapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        <div style={{width: 100, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                            TEMA Class
+                        </div>
+                        <CustomInput value={TEMAClass} onChange={setTEMAClass}/>
+                    </ContentsWrapper>
+                </RowWarapper>
+            </ContentsWrapper>
+            <ContentsWrapper style={{padding: 0}}>
+                <RowWarapper style={{alignItems: 'center'}}>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        <div style={{width: 100, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                            Weight/Shell
+                        </div>
+                        <CustomInput value={weightShell} onChange={setWeightShell}/>
+                        kg
+                    </ContentsWrapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        <div style={{width: 140, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                            Filled with Water
+                        </div>
+                        <CustomInput value={filledWithWater} onChange={setFilledWithWater}/>
+                        kg
+                    </ContentsWrapper>
+                    <ContentsWrapper style={{gap: 10, border: 'none'}}>
+                        <div style={{width: 50, flexShrink: 0, textAlign: 'left', paddingLeft: 10}}>
+                            Bundle
+                        </div>
+                        <CustomInput value={bundle} onChange={setBundle}/>
+                        kg
+                    </ContentsWrapper>
+                </RowWarapper>
+            </ContentsWrapper>
         </FrameWrapper>
         <div style={{height: 10, width: '100%', display: 'block', textAlign: 'right'}}>© 2025 MyTech. All Rights Reserved.</div>
         </div>
