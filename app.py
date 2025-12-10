@@ -12,7 +12,7 @@ from flask import Flask, request, jsonify, send_from_directory, redirect, send_f
 import threading
 from flask_cors import CORS
 import io, base64
-import os
+import os, sys
 import webview
 import CoolProp.CoolProp as CP
 from openpyxl import load_workbook
@@ -520,7 +520,7 @@ def calc():
                 Hot_VCT = Hot_V
                 C_cPT =  C_cP
                 H_cPT = H_cP
-
+            print(Cold_h, Hot_h, Fouling_F, Tk)
             Total_convec = 1/(1/Cold_h + 1/Hot_h + Fouling_F + Tk/14.4)        # 평행 평판 
         
             if i <= N :
@@ -1144,7 +1144,13 @@ def excel():
     rowsSupportedInlet = inputs.get("rowsSupportedInlet")
     rowsSupportedOutlet = inputs.get("rowsSupportedOutlet")
 
-    wb = load_workbook('output_tema.xlsx')
+    if getattr(sys, "frozen", False):
+        base_path = sys._MEIPASS  # exe 실행 시 임시 폴더
+    else:
+        base_path = os.path.abspath(".")
+    
+    excel_path = os.path.join(base_path, "output_tema.xlsx")
+    wb = load_workbook(excel_path)
     ws = wb['1 - TEMA']
 
     ws["N32"] = heat_exchanged
@@ -1305,40 +1311,60 @@ def excel():
     wb.save(output)
     output.seek(0)
 
-    return send_file(
-        output,
-        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        download_name="result.xlsx",
-        as_attachment=True
-    )
-
-@app.route("/generate-file")
-def generate_file():
-    path = "generated/result.txt"
-
-    os.makedirs("generated", exist_ok=True)
-
-    with open(path, "w", encoding="utf-8") as f:
-        f.write("Hello. This is server generated file!")
-
-    return {"path": path}
-
-import shutil
+    encoded = base64.b64encode(output.read()).decode("utf-8")
+    return jsonify({"data": encoded})
 
 class Api:
-    def save_file(self, src_path):
-        # WebView 앱이 저장해줄 위치
-        dst_path = os.path.join(os.path.expanduser("~/Downloads"), os.path.basename(src_path))
-        shutil.copy(src_path, dst_path)
-        return f"Saved to: {dst_path}"
+    def save_file(self, base64_str, default_filename):
+        # 1) 파일 저장 다이얼로그 열기
+        save_path = webview.windows[0].create_file_dialog(
+            dialog_type=webview.SAVE_DIALOG,
+            save_filename=default_filename
+        )
+
+        if not save_path:
+            return "Canceled"
+
+        # 2) base64 → 실제 파일 저장
+        with open(save_path, "wb") as f:
+            f.write(base64.b64decode(base64_str))
+
+        return f"Saved to: {save_path}"
+
+from webview import FileDialog
+
+class Api:
+    def save_file(self, base64_str, default_filename):
+        # pywebview 파일 저장 다이얼로그
+        save_path = webview.windows[0].create_file_dialog(
+            dialog_type=FileDialog.SAVE,
+            save_filename=default_filename
+        )
+
+        if not save_path:
+            return "CANCELLED"
+
+        # pywebview 4.x 이상에서 create_file_dialog는 tuple 반환 가능
+        if isinstance(save_path, tuple):
+            save_path = save_path[0]
+
+        ext = os.path.splitext(default_filename)[1]  # 예: ".pdf"
+        if not save_path.lower().endswith(ext):
+            save_path += ext
+
+        data = base64.b64decode(base64_str)
+        with open(save_path, "wb") as f:
+            f.write(data)
+
+        return save_path
 
 api = Api()
 
 def start_flask():
-    app.run()
+    app.run(host="127.0.0.1", port=5000)
 
 if __name__ == "__main__":
     t = threading.Thread(target=start_flask, daemon=True)
     t.start()
-    webview.create_window("React + Python", "http://127.0.0.1:5000", js_api=api)
+    webview.create_window("Heat Exchanger Calculator", "http://127.0.0.1:5000", js_api=api)
     webview.start()

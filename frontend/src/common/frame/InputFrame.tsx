@@ -2,9 +2,8 @@ import styled from "@emotion/styled";
 import { useState } from "react";
 import CustomNumberInput from "../components/NumberInput";
 import CustomInput from "../components/CustomInput";
-import CustomDropdown from "../components/CustomDropdown";
 import CustomDateInput from "../components/CustomDateInput";
-import { exampleInput, initalOutput } from "../const/mock";
+import { initalOutput } from "../const/mock";
 import type { Result } from "../../App";
 
 const RowWarapper = styled.div`
@@ -13,6 +12,15 @@ const RowWarapper = styled.div`
     gap: 0px;
     width: 100%;
 `;
+
+const ButtonWrapper = styled.div`
+    width: 100%;
+    display: flex;
+    flex: 1;
+    flex-direction: row;
+    gap: 20px;
+    justify-content: flex-end;
+`
 
 const ColumnWrapper = styled.div`
     display: flex; 
@@ -50,11 +58,6 @@ interface InputFrameProps {
 }
 
 export default function InputFrame({setResult, setLoading, setIsInput} : InputFrameProps) {
-    const [unitIdentifier, setUnitIdentifier] = useState<string>('');
-    const [caseMode, setCaseMode] = useState<string>('');
-    const [serviceType, setServiceType] = useState<string>('');
-    const [caseInput, setCaseInput] = useState<string>('');
-    const [problem, setProblem] = useState<string>('');
     const [customer, setCustomer] = useState<string>('');
     const [jobNo, setJobNo] = useState<string>('');
     const [address, setAddress] = useState<string>('');
@@ -66,8 +69,6 @@ export default function InputFrame({setResult, setLoading, setIsInput} : InputFr
     const [rev, setRev] = useState<string>('');
     const [type, setType] = useState<string>('');
     const [orientation, setOrientation] = useState<string>('');
-    const [hotFluid, setHotFluid] = useState<string>('');
-    const [unitAngle, setUnitAngle] = useState<string>('');
     const [connectParallel, setConnectParallel] = useState<string>('');
     const [connectSeries, setConnectSeries] = useState<string>('');
 
@@ -189,16 +190,41 @@ export default function InputFrame({setResult, setLoading, setIsInput} : InputFr
     const [rowsSupportedInlet, setRowsSupportedInlet] = useState<string>('');
     const [rowsSupportedOutlet, setRowsSupportedOutlet] = useState<string>('');
 
+    const [shellUnit, setShellUnit] = useState<string>('');
+    const [sizeVertical, setSizeVertical] = useState<string>('');
+    const [sizeHorizontal, setSizeHorizontal] = useState<string>('');
+
     const errorFunction = (v: string) => {
         if (v == '잘못된 입력') {
             return true;
         }
         return false;
     }
-
+    
     const handleCalculate = async () => {
         try {
-        const inputs = {...exampleInput, 'init_data': initalOutput};
+        const inputs = {
+            'tube_fluid_quantity_total': parseFloat(fluidQuantityTotalTube),
+            'La_Heat': parseFloat(latentHeatInTube),
+            'tube_no': parseFloat(tubeNo),
+            'tube_OD': parseFloat(OD),
+            'shell_fluid_quantity_total': parseFloat(fluidQuantityTotalShell),
+            'tube_pitch': parseFloat(pitch),
+            'shell_temp_out_expected': parseFloat(temperatureOutShell),
+            'tube_temp_out_expected': parseFloat(temperatureOutTube),
+            'tube_temp_in': parseFloat(temperatureInTube),
+            'Thk': parseFloat(Thk),
+            'fouling_resistance': parseFloat(foulingResistanceShell),
+            'title': serviceUnit,
+            'no_passes_per_shell_tube': parseFloat(numberPassesTube),
+            'no_passes_per_shell_shell': parseFloat(numberPassesShell),
+            'shell_temp_in': parseFloat(temperatureInShell),
+            'shell_spec_temp': parseFloat(temperatureOutShell),
+            'shell_per_unit': parseFloat(shellUnit),
+            'inlet_pressure_shell': parseFloat(inletPressureShell),
+            'inlet_pressure_tube': parseFloat(inletPressureTube),
+            'init_data': initalOutput,
+        };
         console.log('inputs', JSON.stringify(inputs));
 
         const response = await fetch('http://127.0.0.1:5000/api/calc', {
@@ -221,6 +247,29 @@ export default function InputFrame({setResult, setLoading, setIsInput} : InputFr
     };
 
     const handleOnCalculate = async () => {
+        if (
+            fluidQuantityTotalTube === '' ||
+            latentHeatInTube === '' ||
+            tubeNo === '' ||
+            OD === '' ||
+            fluidQuantityTotalShell === '' ||
+            pitch === '' ||
+            temperatureOutShell === '' ||
+            temperatureOutTube === '' ||
+            temperatureInTube === '' ||
+            Thk === '' ||
+            foulingResistanceShell === '' ||
+            numberPassesTube === '' ||
+            numberPassesShell === '' ||
+            temperatureInShell === '' ||
+            temperatureOutShell === '' ||
+            shellUnit === '' ||
+            inletPressureShell === '' ||
+            inletPressureTube === ''
+        ) {
+            alert("붉은 테두리로 표시된 항목들은 모두 필수 입력값입니다. 확인 후 입력해주세요.");
+            return;
+        }
         setLoading(true);
         await handleCalculate();
         setResult(prev => ({
@@ -301,6 +350,8 @@ export default function InputFrame({setResult, setLoading, setIsInput} : InputFr
                 Thk: Thk,
                 length: length,
                 pitch: pitch,
+                sizeHorizontal: sizeHorizontal,
+                sizeVertical: sizeVertical,
 
                 tubeType: tubeType,
                 tubeMaterial: tubeMaterial,
@@ -355,193 +406,114 @@ export default function InputFrame({setResult, setLoading, setIsInput} : InputFr
     return (
          <div style={{display: 'flex', flexDirection: 'column', gap: 20, width: '100%'}}>
         <FrameWrapper>
-            <RowWarapper>
-                <ContentsWrapper style={{fontWeight: 'bold', fontSize: 40, justifyContent: 'space-between'}}>
-                    LOGO HERE
-                    <button style={{fontSize: 20}} onClick={handleOnCalculate}>calculate</button>
+             <RowWarapper style={{border: '1px solid #ccc'}}>
+                <div style={{fontSize: 70, fontWeight: 'bold', border: 'none'}}>MY LOGO</div>
+                <ContentsWrapper style={{fontWeight: 'bold', fontSize: 24, justifyContent: 'center', border: 'none'}}>
+                    <ColumnWrapper style={{alignItems: 'space-between'}}>
+                        HEAT EXCHANGER SPECIFICATION SHEET
+                        <ContentsWrapper style={{border: 'none', justifyContent: 'flex-end', fontSize: 20, fontWeight: 'normal'}}>
+                            Job No.
+                            <div style={{width: 20}}/>
+                            <div>
+                                <CustomInput value={jobNo} onChange={setJobNo} />
+                            </div>
+                        </ContentsWrapper>
+                    </ColumnWrapper>
                 </ContentsWrapper>
             </RowWarapper>
-            <RowWarapper>
+            <RowWarapper style={{border: '1px solid #ccc'}}>
                 <ContentsWrapper style={{border: 'none'}}>
-                    <div style={{width: 110, textAlign: 'left'}}>
-                        Unit identifier
-                    </div>
-                    <CustomInput value={unitIdentifier} onChange={setUnitIdentifier} />
-                </ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
-                    <div style={{width: 150, textAlign: 'left'}}>
-                        Case mode
-                    </div>
-                    <CustomDropdown
-                        value={caseMode}
-                        onChange={setCaseMode}
-                        options={[
-                            "Rating",
-                            "Simulation",
-                            "Design",
-                        ]}
-                        placeholder="Select Case mode"
-                    />
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <div style={{width: 150, textAlign: 'left'}}>
-                        Service type
-                    </div>
-                    <CustomDropdown
-                        value={serviceType}
-                        onChange={setServiceType}
-                        options={[
-                            "Generic Shell & Tube",
-                            "Standard Shell & Tube",
-                        ]}
-                        placeholder="Select service type"
-                    />
-                </ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
-                    <div style={{width: 100, textAlign: 'left'}}>
-                        Case
-                    </div>
-                        <CustomInput value={caseInput} onChange={setCaseInput} />
-                </ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
-                    <div style={{width: 100, textAlign: 'left'}}>
-                        Problem
-                    </div>
-                        <CustomInput value={problem} onChange={setProblem} />
-                </ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
-                    <div style={{width: 100, textAlign: 'left'}}>
+                    <div style={{width: 200, textAlign: 'left'}}>
                         Customer
                     </div>
                     <CustomInput value={customer} onChange={setCustomer} />
                 </ContentsWrapper>
-                <ContentsWrapper>
-                    <div style={{width: 100, textAlign: 'left'}}>
-                        Job No.
-                    </div>
-                    <CustomInput value={jobNo} onChange={setJobNo} />
-                </ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
-                    <div style={{width: 100, textAlign: 'left'}}>
-                        Address
-                    </div>
-                    <CustomInput value={address} onChange={setAddress} />
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <div style={{width: 120, textAlign: 'left'}}>
+                <ContentsWrapper style={{border: 'none'}}>
+                    <div style={{width: 200, textAlign: 'left'}}>
                         Reference No.
                     </div>
                     <CustomInput value={refNo} onChange={setRefNo} />
                 </ContentsWrapper>
             </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
-                    <div style={{width: 100, textAlign: 'left'}}>
-                        Location
+            <RowWarapper style={{border: '1px solid #ccc'}}>
+                <ContentsWrapper style={{border: 'none'}}>
+                    <div style={{width: 200, textAlign: 'left'}}>
+                        Address
                     </div>
-                    <CustomInput value={location} onChange={setLocation} />
+                    <CustomInput value={address} onChange={setAddress} />
                 </ContentsWrapper>
-                <ContentsWrapper>
-                    <div style={{width: 120, textAlign: 'left'}}>
+                <ContentsWrapper style={{border: 'none'}}>
+                    <div style={{width: 200, textAlign: 'left'}}>
                         Proposal No.
                     </div>
                     <CustomInput value={proposalNo} onChange={setProposalNo} />
                 </ContentsWrapper>
             </RowWarapper>
-            <RowWarapper>
+            <RowWarapper style={{border: '1px solid #ccc'}}>
                 <ContentsWrapper style={{border: 'none'}}>
-                    <div style={{width: 140, textAlign: 'left'}}>
+                    <div style={{width: 200, textAlign: 'left'}}>
+                        Plant Location
+                    </div>
+                    <CustomInput value={location} onChange={setLocation} />
+                </ContentsWrapper>
+                <ContentsWrapper style={{border: 'none'}}>
+                    <ContentsWrapper style={{border: 'none', paddingRight: 10, padding: 0}}>
+                        <div style={{width: 80, textAlign: 'left'}}>
+                            Date
+                        </div>
+                        <CustomDateInput value={date} onChange={setDate} />
+                    </ContentsWrapper>
+                    <ContentsWrapper style={{border: 'none', padding: 0, paddingLeft: 10}}>
+                        <div style={{width: 50, textAlign: 'left'}}>
+                            Rev
+                        </div>
+                        <CustomInput value={rev} onChange={setRev} />
+                    </ContentsWrapper>
+                </ContentsWrapper>
+            </RowWarapper>
+            <RowWarapper style={{border: '1px solid #ccc'}}>
+                <ContentsWrapper style={{border: 'none'}}>
+                    <div style={{width: 200, textAlign: 'left'}}>
                         Service of Unit
                     </div>
                     <CustomInput value={serviceUnit} onChange={setServiceUnit} />
                 </ContentsWrapper>
                 <ContentsWrapper style={{border: 'none'}}>
-                    <ContentsWrapper style={{border: 'none'}}>
-                        <div style={{width: 120, textAlign: 'left'}}>
-                        Date
-                        </div>
-                        <CustomDateInput value={date} onChange={setDate}/>
-                    </ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none'}}>
-                        <div style={{width: 70, textAlign: 'left'}}>
-                        Rev
-                        </div>
-                        <CustomInput value={rev} onChange={setRev}/>
-                    </ContentsWrapper>
-                </ContentsWrapper>
-            </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none'}}>
-                        <div style={{width: 140, textAlign: 'left'}}>
-                            Type
-                        </div>
-                        <CustomInput value={type} onChange={setType}/>
-                    </ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none'}}>
-                        <div style={{width: 150}}>
-                            Orientation
-                        </div>
-                        <CustomDropdown
-                            value={orientation}
-                            onChange={setOrientation}
-                            options={[
-                                "vertical",
-                                "horizontal",
-                            ]}
-                            placeholder=""
-                        />
-                    </ContentsWrapper>
-                </ContentsWrapper>
-                <ContentsWrapper>
-                    <div style={{width: 120, textAlign: 'left'}}>
+                    <div style={{width: 200, textAlign: 'left'}}>
                         Item No.
                     </div>
-                    <CustomNumberInput value={itemNo} onChange={setItemNo}/>
+                    <CustomInput value={itemNo} onChange={setItemNo} />
                 </ContentsWrapper>
             </RowWarapper>
-            <RowWarapper>
-                <ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none'}}>
-                        <div style={{width: 140, textAlign: 'left'}}>
-                            Hot fluid
-                        </div>
-                        <CustomDropdown
-                            value={hotFluid}
-                            onChange={setHotFluid}
-                            options={[
-                                "shell side",
-                                "tube side",
-                            ]}
-                            placeholder=""
-                        />
-                    </ContentsWrapper>
-                    <ContentsWrapper style={{border: 'none'}}>
-                        <div style={{width: 140, textAlign: 'left'}}>
-                            Unit angle
-                        </div>
-                        <CustomInput value={unitAngle} onChange={setUnitAngle} />
-                    </ContentsWrapper>
+            <RowWarapper style={{border: '1px solid #ccc'}}>
+                <ContentsWrapper style={{border: 'none', gap: 10}}>
+                    Size
+                    <CustomNumberInput value={sizeHorizontal} onChange={setSizeHorizontal} />
+                    x
+                    <CustomNumberInput value={sizeVertical} onChange={setSizeVertical} />
+                    mm
+                </ContentsWrapper>
+                <ContentsWrapper style={{border: 'none', gap: 20}}>
+                    Type
+                    <CustomInput value={type} onChange={setType} />
+                    Orientation
+                    <CustomInput value={orientation} onChange={setOrientation} />
+                </ContentsWrapper>
+            </RowWarapper>
+            <RowWarapper style={{border: '1px solid #ccc'}}>
+                <ContentsWrapper style={{border: 'none', gap: 20}}>
+                    <div style={{flexShrink: 0}}>
+                        Shell/Unit
+                    </div>
+                    <CustomNumberInput value={shellUnit} onChange={setShellUnit} red={shellUnit == ''}/>
                 </ContentsWrapper>
                 <ContentsWrapper style={{border: 'none', gap: 10}}>
-                    Connected In
-                    <div style={{width: 200}}>
-                        <CustomInput value={connectParallel} onChange={setConnectParallel} />
+                    <div style={{flexShrink: 0}}>
+                        Connected In
                     </div>
+                    <CustomNumberInput value={connectParallel} onChange={setConnectParallel} />
                     parallel
-                    <div style={{width: 200}}>
-                        <CustomInput value={connectSeries} onChange={setConnectSeries} />
-                    </div>
+                    <CustomNumberInput value={connectSeries} onChange={setConnectSeries} />
                     series
                 </ContentsWrapper>
             </RowWarapper>
@@ -563,8 +535,8 @@ export default function InputFrame({setResult, setLoading, setIsInput} : InputFr
 
             <RowWarapper>
                 <ContentsWrapper>Fluid Qunatity, Total<div style={{width: 60}} />kg/hr</ContentsWrapper>
-                <ContentsWrapper style={{justifyContent: 'center'}}><CustomNumberInput value={fluidQuantityTotalShell} onChange={setFluidQuantityTotalShell}/></ContentsWrapper>
-                <ContentsWrapper style={{justifyContent: 'center'}}><CustomNumberInput value={fluidQuantityTotalTube} onChange={setFluidQuantityTotalTube}/></ContentsWrapper>
+                <ContentsWrapper style={{justifyContent: 'center'}}><CustomNumberInput value={fluidQuantityTotalShell} onChange={setFluidQuantityTotalShell} red={fluidQuantityTotalShell == ''}/></ContentsWrapper>
+                <ContentsWrapper style={{justifyContent: 'center'}}><CustomNumberInput value={fluidQuantityTotalTube} onChange={setFluidQuantityTotalTube} red={fluidQuantityTotalTube == ''}/></ContentsWrapper>
             </RowWarapper>
             <RowWarapper>
                     <ContentsWrapper><div style={{width: 30}} />Vapor (In/Out)</ContentsWrapper>
@@ -695,20 +667,20 @@ export default function InputFrame({setResult, setLoading, setIsInput} : InputFr
                 <ContentsWrapper>
                     <RowWarapper style={{gap: 10}}>
                         <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                            <CustomNumberInput value={temperatureInShell} onChange={setTemperatureInShell}/>
+                            <CustomNumberInput value={temperatureInShell} onChange={setTemperatureInShell} red={temperatureInShell == ''}/>
                         </ContentsWrapper>
                         <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                            <CustomNumberInput value={temperatureOutShell} onChange={setTemperatureOutShell}/>
+                            <CustomNumberInput value={temperatureOutShell} onChange={setTemperatureOutShell} red={temperatureOutShell == ''}/>
                         </ContentsWrapper>
                     </RowWarapper>
                 </ContentsWrapper>
                 <ContentsWrapper>
                     <RowWarapper style={{gap: 10}}>
                         <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                            <CustomNumberInput value={temperatureInTube} onChange={setTemperatureInTube}/>
+                            <CustomNumberInput value={temperatureInTube} onChange={setTemperatureInTube} red={temperatureInTube == ''}/>
                         </ContentsWrapper>
                         <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                            <CustomNumberInput value={temperatureOutTube} onChange={setTemperatureOutTube}/>
+                            <CustomNumberInput value={temperatureOutTube} onChange={setTemperatureOutTube} red={temperatureOutTube == ''}/>
                         </ContentsWrapper>
                     </RowWarapper>
                 </ContentsWrapper>
@@ -729,7 +701,7 @@ export default function InputFrame({setResult, setLoading, setIsInput} : InputFr
                 <ContentsWrapper>
                     <RowWarapper style={{gap: 10}}>
                         <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
-                            <CustomNumberInput value={latentHeatInTube} onChange={setLatentHeatInTube}/>
+                            <CustomNumberInput value={latentHeatInTube} onChange={setLatentHeatInTube} red={latentHeatInTube == ''}/>
                         </ContentsWrapper>
                         <ContentsWrapper style={{justifyContent: 'center', border: 'none', padding: 0}}>
                             <CustomNumberInput value={latentHeatOutTube} onChange={setLatentHeatOutTube}/>
@@ -741,20 +713,20 @@ export default function InputFrame({setResult, setLoading, setIsInput} : InputFr
             <RowWarapper>
                 <ContentsWrapper>Inlet pressure<div style={{width: 110}} />barG</ContentsWrapper>
                 <ContentsWrapper>
-                    <CustomNumberInput value={inletPressureShell} onChange={setInletPressureShell}/>
+                    <CustomNumberInput value={inletPressureShell} onChange={setInletPressureShell} red={inletPressureShell == ''}/>
                 </ContentsWrapper>
                 <ContentsWrapper>
-                    <CustomNumberInput value={inletPressureTube} onChange={setInletPressureTube}/>
+                    <CustomNumberInput value={inletPressureTube} onChange={setInletPressureTube} red={inletPressureTube == ''}/>
                 </ContentsWrapper>
             </RowWarapper>
 
             <RowWarapper>
                 <ContentsWrapper>Pressure drop, allow.<div style={{width: 60}} />kPa</ContentsWrapper>
                 <ContentsWrapper>
-                    <CustomNumberInput value={pressureDropAllowShell} onChange={setPressureDropAllowShell}/>
+                    <CustomNumberInput value={pressureDropAllowShell} onChange={setPressureDropAllowShell} red={pressureDropAllowShell == ''}/>
                 </ContentsWrapper>
                 <ContentsWrapper>
-                    <CustomNumberInput value={pressureDropAllowTube} onChange={setPressureDropAllowTube}/>
+                    <CustomNumberInput value={pressureDropAllowTube} onChange={setPressureDropAllowTube} red={pressureDropAllowTube == ''}/>
                 </ContentsWrapper>
             </RowWarapper>
 
@@ -762,7 +734,7 @@ export default function InputFrame({setResult, setLoading, setIsInput} : InputFr
             <RowWarapper>
                 <ContentsWrapper>Fouling Resistance (mm)<div style={{width: 30}} />m2-KW</ContentsWrapper>
                 <ContentsWrapper>
-                    <CustomNumberInput value={foulingResistanceShell} onChange={setFoulingResistanceShell}/>
+                    <CustomNumberInput value={foulingResistanceShell} onChange={setFoulingResistanceShell} red={foulingResistanceShell == ''}/>
                 </ContentsWrapper>
                 <ContentsWrapper></ContentsWrapper>
             </RowWarapper>
@@ -800,9 +772,9 @@ export default function InputFrame({setResult, setLoading, setIsInput} : InputFr
             <RowWarapper>
                 <ContentsWrapper>Number passes per shell</ContentsWrapper>
                 <ContentsWrapper style={{justifyContent: 'center'}}>
-                    <CustomNumberInput value={numberPassesShell} onChange={setNumberPassesShell}/>
+                    <CustomNumberInput value={numberPassesShell} onChange={setNumberPassesShell} red={numberPassesShell == ''}/>
                 </ContentsWrapper>
-                <ContentsWrapper style={{justifyContent: 'center'}}><CustomNumberInput value={numberPassesTube} onChange={setNumberPassesTube}/></ContentsWrapper>
+                <ContentsWrapper style={{justifyContent: 'center'}}><CustomNumberInput value={numberPassesTube} onChange={setNumberPassesTube} red={numberPassesTube == ''}/></ContentsWrapper>
             </RowWarapper>
             <RowWarapper>
                 <ContentsWrapper>Corrosion allowance<div style={{width: 60}} />mm</ContentsWrapper>
@@ -876,26 +848,26 @@ export default function InputFrame({setResult, setLoading, setIsInput} : InputFr
                         <div style={{width: 80, flexShrink: 0}}>
                             Tube No.
                         </div>
-                        <CustomNumberInput value={tubeNo} onChange={setTubeNo}/>
+                        <CustomNumberInput value={tubeNo} onChange={setTubeNo} red={tubeNo == ''}/>
                     </ContentsWrapper>
                     <ContentsWrapper style={{gap: 10, border: 'none'}}>
                         OD
-                        <CustomNumberInput value={OD} onChange={setOD}/>
+                        <CustomNumberInput value={OD} onChange={setOD} red={OD == ''}/>
                         mm
                     </ContentsWrapper>
                     <ContentsWrapper style={{gap: 10, border: 'none'}}>
                         Thk(avg)
-                        <CustomNumberInput value={Thk} onChange={setThk}/>
+                        <CustomNumberInput value={Thk} onChange={setThk} red={Thk == ''}/>
                         mm
                     </ContentsWrapper>
                     <ContentsWrapper style={{gap: 10, border: 'none'}}>
                         Length
-                        <CustomNumberInput value={length} onChange={setLength}/>
+                        <CustomNumberInput value={length} onChange={setLength} red={length == ''}/>
                         m
                     </ContentsWrapper>
                     <ContentsWrapper style={{gap: 10, border: 'none'}}>
                         Pitch
-                        <CustomNumberInput value={pitch} onChange={setPitch}/>
+                        <CustomNumberInput value={pitch} onChange={setPitch} red={pitch == ''}/>
                         mm
                     </ContentsWrapper>
                 </RowWarapper>
@@ -930,7 +902,7 @@ export default function InputFrame({setResult, setLoading, setIsInput} : InputFr
                     <ContentsWrapper style={{gap: 10, border: 'none', borderRight: '2px solid #ccc', padding: 0}}>
                         <ContentsWrapper style={{gap: 10, border: 'none'}}>
                             ID
-                            <CustomNumberInput value={shellID} onChange={setShellID}/>
+                            <CustomNumberInput value={shellID} onChange={setShellID} red={shellID == ''}/>
                             mm
                         </ContentsWrapper>
                         <ContentsWrapper style={{gap: 10, border: 'none'}}>
@@ -1237,6 +1209,9 @@ export default function InputFrame({setResult, setLoading, setIsInput} : InputFr
                 </RowWarapper>
             </ContentsWrapper>
         </FrameWrapper>
+        <ButtonWrapper>
+            <button onClick={handleOnCalculate}>Calculate</button>
+        </ButtonWrapper>
         <div style={{height: 10, width: '100%', display: 'block', textAlign: 'right'}}>© 2025 MyTech. All Rights Reserved.</div>
         </div>
     );

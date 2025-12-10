@@ -68,6 +68,7 @@ export default function OutputFrame({ output, setIsInput, setLoading}: OutputFra
     const sketchRef = useRef<HTMLDivElement>(null);
 
     const handleDownloadPDF = async () => {
+        console.log('called PDF!');
         if (!sketchRef.current) return;
 
         const element = sketchRef.current;
@@ -82,16 +83,35 @@ export default function OutputFrame({ output, setIsInput, setLoading}: OutputFra
         const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
 
         pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-        pdf.save("output.pdf");
+        const pdfBlob = pdf.output("blob");
+        console.log(pdfBlob);
+
+        function arrayBufferToBase64(buffer: ArrayBuffer) {
+            let binary = "";
+            const bytes = new Uint8Array(buffer);
+            const chunkSize = 0x8000; // 32kb
+            for (let i = 0; i < bytes.length; i += chunkSize) {
+                const chunk = bytes.subarray(i, i + chunkSize);
+                binary += String.fromCharCode(...chunk);
+            }
+            return btoa(binary);
+        }
+
+        const buffer = await pdfBlob.arrayBuffer();
+        const base64Str = arrayBufferToBase64(buffer);
+        console.log(base64Str);
+        await window.pywebview.api.save_file(base64Str, 'sketch.pdf');
     };
     
     console.log(output);
 
     const handleExportExcel = async () => {
+        console.log('called excel!');
         try {
             const inputs = output;
-            console.log(inputs);
             setLoading(true);
+
+            // 1) Flask에서 base64 엑셀 생성 요청
             const response = await fetch('http://127.0.0.1:5000/api/excel', {
                 method: 'POST',
                 headers: {
@@ -104,25 +124,20 @@ export default function OutputFrame({ output, setIsInput, setLoading}: OutputFra
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            // Blob으로 받기
-            const blob = await response.blob();
+            // base64 Excel 데이터 받기
+            const { data } = await response.json();
+
+            // 2) Python에 저장 요청
+            //    save_file(base64_string, filename)
+            await window.pywebview.api.save_file(data, 'result.xlsx');
             setLoading(false);
 
-            // Blob → 다운로드 링크 만들기
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'result.xlsx';  // 다운로드될 파일명
-            a.click();
-
-            // URL 해제
-            window.URL.revokeObjectURL(url);
-
-            console.log('success!');
-        } catch (error: any) {
+        } catch (error) {
             console.error('Error:', error);
-        } 
+            setLoading(false);
+        }
     };
+
 
     const handleExportPDF = async () => {
         await handleExportExcel();
@@ -1214,7 +1229,7 @@ export default function OutputFrame({ output, setIsInput, setLoading}: OutputFra
             </ButtonWrapper>
             <div style={{ width: '100%', display: 'block', textAlign: 'right'}}>© 2025 MyTech. All Rights Reserved.</div>
             <div style={{ opacity: 0, pointerEvents: 'none', position: 'absolute', left: -9999 }}>
-                <SketchFrame ref={sketchRef} length={parseFloat(output.length)} diam={parseFloat(output.shellOD)} />
+                <SketchFrame ref={sketchRef} length={parseFloat(output.length)} diam={parseFloat(output.shellID)} />
             </div>
         </div>
     );

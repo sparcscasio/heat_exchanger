@@ -8,6 +8,7 @@ interface Props {
   placeholder?: string;
   min?: number;
   max?: number;
+  red?: boolean;
 }
 
 const Input = styled.input`
@@ -26,6 +27,7 @@ export default function CustomNumberInput({
   placeholder,
   min,
   max,
+  red = false,
 }: Props) {
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
@@ -50,7 +52,7 @@ export default function CustomNumberInput({
       onChange={handleChange}
       placeholder={placeholder}
       inputMode="decimal"
-      style={{backgroundColor: '#ececec'}}
+      style={{backgroundColor: '#ececec', border: red ? '1px solid red' : 'none'}}
     />
   );
 }
